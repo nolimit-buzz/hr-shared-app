@@ -423,9 +423,7 @@ const Dashboard = () => {
     const allDataLoaded = !calendlyLoading && 
                          !notificationsLoading && 
                          !isTabLoading && 
-                         !emailTemplatesLoading &&
-                         calendlyEvents.length > 0;
-
+                         !emailTemplatesLoading;
     if (allDataLoaded) {
       setIsAllDataLoaded(true);
       setShowSkeleton(false);
