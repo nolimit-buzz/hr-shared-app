@@ -58,7 +58,7 @@ import { useTheme } from "@mui/material/styles";
 import { PHASE_OPTIONS } from "@/app/constants/phaseOptions";
 import { styled } from "@mui/material/styles";
 import CreatableSelect from 'react-select/creatable';
-import { getSkillsForRole, Skill } from '@/utils/skills';
+import { getSkillsForRole, Skill } from '@/app/lib/skills';
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import GroupIcon from "@mui/icons-material/Group";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";

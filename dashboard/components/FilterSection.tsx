@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import CreatableSelect from 'react-select/creatable';
 import CloseIcon from '@mui/icons-material/Close';
-import { Skill } from '@/utils/skills';
+import { Skill } from '@/app/lib/skills';
 import { useTheme } from '@mui/material/styles';
 
 // Styled Components

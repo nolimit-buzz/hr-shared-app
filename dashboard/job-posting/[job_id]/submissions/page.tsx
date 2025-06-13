@@ -21,7 +21,7 @@ import CandidateListSection from "@/app/dashboard/components/dashboard/Candidate
 import { useTheme } from "@mui/material/styles";
 import { PHASE_OPTIONS } from "@/app/constants/phaseOptions";
 import { styled } from "@mui/material/styles";
-import { getSkillsForRole, Skill } from "@/utils/skills";
+import { getSkillsForRole, Skill } from "@/app/lib/skills";
 import JobDescription from "@/app/dashboard/components/JobDescription";
 import FilterSection from "@/app/dashboard/components/FilterSection";
 import Notification from '@/app/dashboard/components/Notification';

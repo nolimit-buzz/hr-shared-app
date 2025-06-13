@@ -37,7 +37,7 @@ import { BorderStyle } from '@mui/icons-material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
-import { generateInput, generateSkillsForRole } from '../../../../utils/openai';
+import { generateInput, generateSkillsForRole } from '../../../lib/openai';
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useTheme } from '@mui/material/styles';
 import CreatableSelect from 'react-select/creatable';

@@ -35,8 +35,8 @@ import DashboardCard from './components/shared/DashboardCard';
 import Notifications from './components/dashboard/Notifications';
 import EmailTemplates from './components/dashboard/EmailTemplates';
 import { useRouter } from 'next/navigation';
-import Calendar from '@/components/Calendar';
-import { CalendlyEvent } from '@/types/calendly';
+import Calendar from '@/app/components/Calendar';
+import { CalendlyEvent } from '@/app/types/calendly';
 
 const statCards = [
   {

@@ -25,7 +25,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
-import { generateSkillsForRole } from "@/utils/openai";
+import { generateSkillsForRole } from "@/app/lib/openai";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, CircularProgress, Alert } from '@mui/material';
-import { CalendlyEvent } from '@/types/calendly';
+import { CalendlyEvent } from '@/app/types/calendly';
 
 interface CalendarProps {
   events: CalendlyEvent[];

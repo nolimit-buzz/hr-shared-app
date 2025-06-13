@@ -14,7 +14,7 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import PageContainer from '@/app/dashboard/components/container/PageContainer';
-import { CalendlyEvent } from '@/types/calendly';
+import { CalendlyEvent } from '@/app/types/calendly';
 import { 
   format, 
   isSameDay, 

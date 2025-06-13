@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useTheme } from "@mui/material/styles";
-import { Banner } from '@/components/Banner';
+import { Banner } from '@/app/components/Banner';
 
 export default function AssessmentInstructionsPage() {
   const theme = useTheme();

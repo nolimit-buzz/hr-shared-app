@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { Banner } from '@/components/Banner';
+import { Banner } from '@/app/components/Banner';
 import { RadioGroup, FormControlLabel, Radio } from '@mui/material';
 
 const StyledButton = styled(Button)(({ theme }) => ({
