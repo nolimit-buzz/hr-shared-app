@@ -876,8 +876,8 @@ const Dashboard = () => {
               />
             </Grid>
           </Grid>
-          <Grid container item xs={12} spacing={3} justifyContent={'space-between'} height={'600px'}>
-            <Grid item xs={12} lg={8} maxHeight={'100%'} sx={{ height: '600px', overflow: 'hidden' }}>
+          <Grid container item xs={12} spacing={3} justifyContent={'space-between'} height={'612px'}>
+            <Grid item xs={12} lg={8} maxHeight={'100%'} sx={{ height: '612px', overflow: 'hidden' }}>
                 <JobPostings 
                   jobPostings={jobPostings} 
                   statusFilter={statusFilter} 
@@ -887,23 +887,23 @@ const Dashboard = () => {
                 // isSubmitting={isSubmitting}
                 />
             </Grid>
-            <Grid container item spacing={2.5} xs={12} lg={4} height={'612px'} direction={{ xs: 'column', md: 'row' }}>
-              <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
+            <Grid  item spacing={2.5} xs={12} lg={4} height={'612px'} direction={{ xs: 'column', md: 'row' }}>
+              {/* <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
                 <Calendar
                   customStyle={{ height: '100%' }}
                   events={calendlyEvents}
                   loading={false}
                   error={calendlyError}
                 />
-              </Grid>
-              <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
+              </Grid> */}
+              {/* <Grid item xs={12} md={6} lg={12} flex={1} height={'100%'}> */}
                 <EmailTemplates 
                   customStyle={{ height: '100%' }}
                   templates={emailTemplates}
                   loading={false}
                   error={emailTemplatesError}
                 />
-              </Grid>
+              {/* </Grid> */}
             </Grid>
           </Grid>
         </Grid>

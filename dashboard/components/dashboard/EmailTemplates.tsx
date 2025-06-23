@@ -45,7 +45,8 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ customStyle, templates,
     <DashboardCard customStyle={{ padding: '0px', ...customStyle }}>
       <Box sx={{ 
         overflow: 'auto',
-        position: 'relative'
+        position: 'relative',
+        height: '100%'
       }}>
          <Box
           sx={{
@@ -89,7 +90,7 @@ const EmailTemplates: React.FC<EmailTemplatesProps> = ({ customStyle, templates,
         </Box>
 
         <List sx={{ px: 2,  overflow: "auto", 
-          height: 'calc(300px - 70px)',
+          // height: 'calc(300px - 70px)',
           scrollbarWidth: 'thin',
           scrollbarColor: '#032B4420 transparent',
           '&::-webkit-scrollbar': {
