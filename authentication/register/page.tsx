@@ -5,7 +5,7 @@ import PageContainer from "@/app/dashboard/components/container/PageContainer";
 import Register from "../auth/Register";
 import Image from "next/image";
 import { useTheme } from '@mui/material/styles';
-
+import metadata from "@/utils/metadata";
 const Banner = styled(Box)(({ theme }) => ({
   width: '100%',
   background: theme.palette.primary.main,
@@ -24,7 +24,7 @@ const Pill = styled(Chip)(({ theme }) => ({
   color: '#fff',
 }));
 
-const Login = () => {
+const RegisterPage = () => {
   const theme = useTheme();
 
   return (
@@ -124,27 +124,27 @@ const Login = () => {
               <Typography variant="h1" align="center" color="grey.100">Login to your Account</Typography>
             </Stack> */}
             <Register
-              title="Welcome to ElevateHR"
+              title={`Welcome to ${metadata.host}`}
               subtext={
                 <Typography variant="subtitle1" textAlign="center" color="grey.100" mb={'48px'}>
                   Create an account for your Organization
                 </Typography>
               }
-              subtitle={
-                <Stack direction="row" spacing={1} justifyContent="center" mt={3}>
-                  <Typography color="06C680" variant="h6" fontWeight={500}>
-                    New to Spike?
-                  </Typography>
-                  <Typography
-                    component={Link}
-                    href="/authentication/register"
-                    fontWeight={500}
-                    sx={{ textDecoration: "none", color: "primary.main" }}
-                  >
-                    Create an account
-                  </Typography>
-                </Stack>
-              }
+              // subtitle={
+              //   <Stack direction="row" spacing={1} justifyContent="center" mt={3}>
+              //     <Typography color="06C680" variant="h6" fontWeight={500}>
+              //       New to Spike?
+              //     </Typography>
+              //     <Typography
+              //       component={Link}
+              //       href="/authentication/register"
+              //       fontWeight={500}
+              //       sx={{ textDecoration: "none", color: "primary.main" }}
+              //     >
+              //       Create an account
+              //     </Typography>
+              //   </Stack>
+              // }
             />
           </Box>
         </Stack>
@@ -153,4 +153,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default RegisterPage;

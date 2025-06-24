@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Box, Button, Stack, Typography, Alert, Link } from "@mui/material";
 import Image from "next/image";
 import axios from 'axios';
-import metadata from "../../utils/metadata";
+import metadata from "@/utils/metadata";
 
 // Import steps
 import OnboardingStep1 from "./components/OnboardingStep1";
@@ -97,10 +97,10 @@ const OnboardingPage = () => {
         }
     };
 
-    const isStepValid = () => {
+    const isStepValid = (activeStep: number) => {
         switch (activeStep) {
             case 0: return onboardingData.company_website.trim() !== '';
-            case 1: return true; // Logo is optional
+            case 1: return onboardingData.company_logo !== null;
             case 2: return onboardingData.booking_link.trim() !== '';
             case 3: return onboardingData.company_bio.trim().length >= 50;
             default: return false;
@@ -124,26 +124,45 @@ const OnboardingPage = () => {
 
     return (
         <Stack direction="row" sx={{ height: "100vh", width: "100%", backgroundColor: '#f7f8fc' }}>
-            {/* Left Panel */}
+            {/* Sidebar */}
             <Box
                 sx={{
-                    width: { md: '380px' },
+                    width: { md: '400px' },
                     backgroundColor: 'secondary.main',
                     color: 'primary.contrastText',
                     p: 4,
                     display: { xs: 'none', md: 'flex' },
                     flexDirection: 'column',
-                    justifyContent: 'flex-start'
+                    justifyContent: 'space-between',
                 }}
             >
-                {/* <Stack spacing={1.5} direction="row" alignItems="center" sx={{ mb: 8, width: 'max-content' }}> */}
-                <Image src={metadata.logo} alt={`${metadata.title} Logo`} width={120} height={80} className=" min-w-[120px] w-auto h-[80px]" />
-                {/* </Stack> */}
-
-                <VerticalStepper steps={steps} activeStep={activeStep} />
+                {activeStep === 0 ? (
+                    // Show welcome content only on the first step
+                    <>
+                        <Box>
+                            <Stack spacing={2} direction="row" alignItems="center" sx={{ mb: 6 }}>
+                                <Image src={metadata.logo} alt={`${metadata.title} Logo`} width={180} height={80} />
+                            </Stack>
+                            <Typography fontSize={32} lineHeight={1.1} fontWeight="600" sx={{ mb: 2, mt: 6 }}>
+                                A few clicks away from creating your company profile.
+                            </Typography>
+                            <Typography variant="body1" color="primary.contrastText" sx={{ opacity: 0.8 , mt: 4 , maxWidth: 300 }}>
+                                Complete your company profile in minutes. Save time and attract the best talent.
+                            </Typography>
+                        </Box>
+                    </>
+                ) : (
+                    // Show progress tracker on all other steps
+                    <Box sx={{ mt: 6 }}>
+                        <Stack spacing={2} direction="row" alignItems="center" sx={{ mb: 6 }}>
+                            <Image src={metadata.logo} alt={`${metadata.title} Logo`} width={180} height={80} />
+                        </Stack>
+                        <VerticalStepper steps={steps} activeStep={activeStep} />
+                    </Box>
+                )}
             </Box>
 
-            {/* Right Panel */}
+            {/* Main Content */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh' }}>
                 <Stack direction="row" justifyContent="flex-end" sx={{ p: 2, pr: 4 }}>
                     <Typography variant="body2">
@@ -173,9 +192,9 @@ const OnboardingPage = () => {
                     )}
 
                     {activeStep < steps.length - 1 ? (
-                        <Button variant="contained" onClick={handleNext} disabled={!isStepValid()} sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>Next →</Button>
+                        <Button variant="contained" onClick={handleNext} disabled={!isStepValid(activeStep)} sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>Next →</Button>
                     ) : (
-                        <Button variant="contained" onClick={handleComplete} disabled={loading || !isStepValid()} sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>
+                        <Button variant="contained" onClick={handleComplete} disabled={loading || !isStepValid(activeStep)} sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>
                             {loading ? 'Finishing up...' : 'Complete Setup'}
                         </Button>
                     )}

@@ -147,7 +147,7 @@ const Register: React.FC<RegisterProps> = ({ title, subtitle, subtext }) => {
       });
 
       console.log("Registration successful:", response.data);
-      router.push("/"); // Redirect to login after successful registration
+      router.push("/onboarding"); // Redirect to onboarding after successful registration
 
     } catch (error) {
       setErrorMessage((error as any).response?.data?.message || "Registration failed. Please try again.");
@@ -252,7 +252,7 @@ const Register: React.FC<RegisterProps> = ({ title, subtitle, subtext }) => {
           size="large"
           fullWidth
           type="submit"
-          sx={{ borderRadius: "8px", background: "#4444E2", padding: "18px 24px", color: "secondary.light", bgcolor: "primary.main" }}
+          sx={{ borderRadius: "8px", background: "#4444E2", padding: "18px 24px", color: "secondary.light", bgcolor: "primary.main", '&:hover': { bgcolor: "#4444E2AD" } }}
           disabled={loading}
         >
           {loading ? "Creating Account..." : "Create Account"}
