@@ -364,7 +364,7 @@ const ProfilePage = () => {
       formData.append('job_title', profileData.personal.jobTitle);
       formData.append('company_name', profileData.company.name);
       formData.append('number_of_employees', profileData.company.size);
-      formData.append('company_about', profileData.company.about);
+      formData.append('about', profileData.company.about);
       formData.append('booking_link', profileData.company.bookingLink);
       formData.append('website', profileData.company.website);
 
