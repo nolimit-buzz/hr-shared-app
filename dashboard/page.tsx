@@ -35,8 +35,9 @@ import DashboardCard from './components/shared/DashboardCard';
 import Notifications from './components/dashboard/Notifications';
 import EmailTemplates from './components/dashboard/EmailTemplates';
 import { useRouter } from 'next/navigation';
-import Calendar from '@/app/components/Calendar';
+import Calendar from '@/app/components/Assessments';
 import { CalendlyEvent } from '@/app/types/calendly';
+import Assessment from '@/app/components/Assessment';
 
 const statCards = [
   {
@@ -348,6 +349,8 @@ interface TemplatesResponse {
   templates: Record<string, { title: string }>;
 }
 
+const elevate_base_url = process.env.NEXT_PUBLIC_ELEVATE_BASE_URL || ""; // or hardcode your base URL
+
 const Dashboard = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -388,6 +391,7 @@ const Dashboard = () => {
   const [emailTemplates, setEmailTemplates] = useState<Template[]>([]);
   const [emailTemplatesLoading, setEmailTemplatesLoading] = useState(true);
   const [emailTemplatesError, setEmailTemplatesError] = useState<string | null>(null);
+  const [assessments, setAssessments] = useState([]);
 
   // Add a state to track if all data is loaded
   const [isAllDataLoaded, setIsAllDataLoaded] = useState(false);
@@ -598,6 +602,31 @@ const Dashboard = () => {
     };
 
     fetchEmailTemplates();
+  }, []);
+
+  useEffect(() => {
+    const fetchAssessments = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("jwt");
+        const res = await fetch(
+          'https://app.elevatehr.ai/wp-json/elevatehr/v1/quiz-assessments',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(res, res.ok);
+        if (!res.ok) throw new Error("Failed to fetch assessments");
+        const data = await res.json();
+        setAssessments(data.assessments);
+      } catch (err: any) {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAssessments();
   }, []);
 
   const handleOpen = () => {
@@ -887,23 +916,23 @@ const Dashboard = () => {
                 // isSubmitting={isSubmitting}
                 />
             </Grid>
-            <Grid  item spacing={2.5} xs={12} lg={4} height={'612px'} direction={{ xs: 'column', md: 'row' }}>
-              {/* <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
-                <Calendar
+            <Grid container item spacing={2.5} xs={12} lg={4} height={'612px'} direction={{ xs: 'column', md: 'row' }}>
+              <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
+                <Assessment
                   customStyle={{ height: '100%' }}
-                  events={calendlyEvents}
-                  loading={false}
+                  assessments={assessments}
+                  loading={loading}
                   error={calendlyError}
                 />
-              </Grid> */}
-              {/* <Grid item xs={12} md={6} lg={12} flex={1} height={'100%'}> */}
+              </Grid>
+              <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
                 <EmailTemplates 
                   customStyle={{ height: '100%' }}
                   templates={emailTemplates}
                   loading={false}
                   error={emailTemplatesError}
                 />
-              {/* </Grid> */}
+              </Grid>
             </Grid>
           </Grid>
         </Grid>

@@ -137,7 +137,6 @@ const OnboardingPage = () => {
                 }}
             >
                 {activeStep === 0 ? (
-                    // Show welcome content only on the first step
                     <>
                         <Box>
                             <Stack spacing={2} direction="row" alignItems="center" sx={{ mb: 6 }}>
@@ -152,7 +151,6 @@ const OnboardingPage = () => {
                         </Box>
                     </>
                 ) : (
-                    // Show progress tracker on all other steps
                     <Box sx={{ mt: 6 }}>
                         <Stack spacing={2} direction="row" alignItems="center" sx={{ mb: 6 }}>
                             <Image src={metadata.logo} alt={`${metadata.title} Logo`} width={180} height={80} />

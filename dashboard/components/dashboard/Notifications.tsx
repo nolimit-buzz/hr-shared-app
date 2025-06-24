@@ -150,9 +150,9 @@ const Frame: React.FC<NotificationsProps> = ({ notifications, loading, error, cu
           </Typography>
 
           {notifications.length > 0 && (
-            <Box 
-              sx={{ 
-                display: "flex", 
+            <Box
+              sx={{
+                display: "flex",
                 alignItems: "center",
                 cursor: 'pointer',
                 '&:hover': {
@@ -180,8 +180,26 @@ const Frame: React.FC<NotificationsProps> = ({ notifications, loading, error, cu
           )}
         </Box>
 
-        <List disablePadding sx={{ height: 'calc(300px - 70px)', overflow: 'auto' }}>
-          { error ? (
+        <List disablePadding sx={{
+          height: 'calc(300px - 70px)', overflow: 'auto', scrollbarWidth: 'thin',
+          scrollbarColor: '#032B4420 transparent',
+          '&::-webkit-scrollbar': {
+            height: '4px',
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#032B44',
+            width: '4px',
+            borderRadius: '4px',
+            '&:hover': {
+              background: 'rgba(68, 68, 226, 0.3)',
+            },
+          },
+        }}>
+          {error ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
               <Typography color="error">{error}</Typography>
             </Box>
@@ -191,7 +209,7 @@ const Frame: React.FC<NotificationsProps> = ({ notifications, loading, error, cu
             </Box>
           ) : (
             notifications.map((notification) => (
-              <NotificationItem 
+              <NotificationItem
                 key={notification.id}
                 title={notification.title}
                 content={notification.content}

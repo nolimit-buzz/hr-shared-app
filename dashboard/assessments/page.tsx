@@ -110,9 +110,10 @@ export default function AssessmentsPage() {
       {/* Banner */}
       <Box
         sx={{
-          backgroundColor: `#4444E2`,
-          background: '#4444E2 url(/images/backgrounds/banner-bg.svg) no-repeat right center',
+          backgroundColor: `primary.main`,
+          backgroundImage: 'url(/images/backgrounds/banner-bg.svg)',
           backgroundSize: 'cover',
+          backgroundPosition: 'right center',
           borderRadius: '12px',
           p: { xs: 3, md: 4 },
           mb: 5,

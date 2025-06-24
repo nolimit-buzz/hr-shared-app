@@ -9,19 +9,27 @@ import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import { CalendlyEvent } from '@/app/types/calendly';
 import { useRouter } from 'next/navigation';
 
-interface CalendarProps {
+interface AssessmentItem {
+  id: string;
+  title: string;
+  description?: string;
+  date?: string;
+  status?: string;
+}
+
+interface AssessmentProps {
   customStyle?: React.CSSProperties;
-  events: CalendlyEvent[];
+  assessments: AssessmentItem[];
   loading: boolean;
   error: string | null;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ customStyle, events, loading, error }) => {
+const Assessment: React.FC<AssessmentProps> = ({ customStyle, assessments = [], loading, error }) => {
   const theme = useTheme();
   const router = useRouter();
 
   const handleSeeAll = () => {
-    router.push('/dashboard/upcoming-interviews');
+    router.push('/dashboard/assessments');
   };
 
   return (
@@ -45,7 +53,7 @@ const Calendar: React.FC<CalendarProps> = ({ customStyle, events, loading, error
               letterSpacing: "0.36px",
             }}
           >
-            Upcoming Interviews
+            Recent Assessments
           </Typography>
 
           <Box 
@@ -85,14 +93,14 @@ const Calendar: React.FC<CalendarProps> = ({ customStyle, events, loading, error
         <Typography color="error" sx={{ p: 2 }}>
           {error}
         </Typography>
-      ) : events.length === 0 ? (
+      ) : (!assessments || Array.isArray(assessments) && assessments.length === 0) ? (
         <Typography sx={{ p: 2, color: 'rgba(17, 17, 17, 0.6)' }}>
-          No upcoming events
+          No recent assessments
         </Typography>
       ) : (
         <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
-          {events.map((event, index) => (
-            <React.Fragment key={event.uri}>
+          {assessments.map((assessment, index) => (
+            <React.Fragment key={assessment.id}>
               <ListItem 
                 alignItems="flex-start"
                 sx={{
@@ -127,12 +135,12 @@ const Calendar: React.FC<CalendarProps> = ({ customStyle, events, loading, error
                         mb: 0.5,
                       }}
                     >
-                      {event.name}
+                      {assessment.title}
                     </Typography>
                   }
                   secondary={
                     <Box sx={{ mt: 0.5 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                      {assessment.description && (
                         <Typography
                           component="span"
                           variant="body2"
@@ -140,37 +148,14 @@ const Calendar: React.FC<CalendarProps> = ({ customStyle, events, loading, error
                             color: 'rgba(17, 17, 17, 0.6)',
                             fontSize: '13px',
                             lineHeight: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
+                            display: 'block',
+                            mb: 0.5,
                           }}
                         >
-                          <Box
-                            component="span"
-                            sx={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: 'primary.main',
-                              mr: 1,
-                            }}
-                          />
-                          {format(new Date(event.start_time), 'EEEE, MMMM d, yyyy')}
+                          {assessment.description}
                         </Typography>
-                      </Box>
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        sx={{ 
-                          color: 'rgba(17, 17, 17, 0.6)',
-                          fontSize: '13px',
-                          lineHeight: '16px',
-                          display: 'block',
-                          ml: 2,
-                        }}
-                      >
-                        {format(new Date(event.start_time), 'h:mm a')} - {format(new Date(event.end_time), 'h:mm a')}
-                      </Typography>
-                      {event.location && (
+                      )}
+                      {assessment.date && (
                         <Typography
                           component="span"
                           variant="body2"
@@ -178,31 +163,32 @@ const Calendar: React.FC<CalendarProps> = ({ customStyle, events, loading, error
                             color: 'rgba(17, 17, 17, 0.6)',
                             fontSize: '13px',
                             lineHeight: '16px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            mt: 0.5,
-                            ml: 2,
+                            display: 'block',
                           }}
                         >
-                          <Box
-                            component="span"
-                            sx={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: 'rgba(17, 17, 17, 0.2)',
-                              mr: 1,
-                            }}
-                          />
-                          {event.location.type === 'physical' ? 'Location: ' : 'Meeting: '}
-                          {event.location.location}
+                          {assessment.date}
+                        </Typography>
+                      )}
+                      {assessment.status && (
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          sx={{ 
+                            color: theme.palette.primary.main,
+                            fontSize: '13px',
+                            lineHeight: '16px',
+                            display: 'block',
+                            mt: 0.5,
+                          }}
+                        >
+                          {assessment.status}
                         </Typography>
                       )}
                     </Box>
                   }
                 />
               </ListItem>
-              {index < events.length - 1 && (
+              {index < assessments.length - 1 && (
                 <Divider 
                   component="li" 
                   sx={{ 
@@ -220,4 +206,4 @@ const Calendar: React.FC<CalendarProps> = ({ customStyle, events, loading, error
   );
 };
 
-export default Calendar; 
+export default Assessment; 

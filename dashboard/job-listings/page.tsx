@@ -164,7 +164,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
     borderBottom: "1px solid rgba(17,17,17,0.082)",
   },
   "&:not(thead tr):hover": {
-    backgroundColor: theme.palette.secondary.light,
+    backgroundColor: "#f7f8fc", // Updated hover color
   },
   "& .MuiTouchRipple-root": {
     display: "none",

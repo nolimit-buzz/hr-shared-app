@@ -16,6 +16,8 @@ import {
   Menu,
   MenuItem,
   IconButton,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import DashboardCard from "@/app/dashboard/components/shared/DashboardCard";
 import zIndex from '@mui/material/styles/zIndex';
@@ -59,14 +61,18 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   cursor: 'pointer',
   transition: 'background-color 0.2s ease-in-out',
-  'td, th': {
-    borderBottom: '1px solid rgba(17,17,17,0.082)',
+  "td, th": {
+    borderBottom: "1px solid rgba(17,17,17,0.082)",
   },
-  '&:not(thead tr):hover': {
-    backgroundColor: theme.palette.secondary.light,
+  "&:not(thead tr):hover": {
+    backgroundColor: "#f7f8fc",
   },
-  '& .MuiTouchRipple-root': {
-    display: 'none',
+  "&:not(thead tr):hover .job-title": {
+    textDecoration: "underline",
+    textUnderlineOffset: "2px",
+  },
+  "& .MuiTouchRipple-root": {
+    display: "none",
   },
 }));
 
@@ -211,7 +217,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
       return (
         <>
           {[1, 2, 3, 4, 5].map((index) => (
-            <StyledTableBodyRow key={index}>
+            <StyledTableRow key={index}>
               <StyledTableCell>
                 <Stack>
                   <Skeleton variant="text" width={200} height={24} />
@@ -247,22 +253,45 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
                   <Skeleton variant="text" width={40} height={24} />
                 </Box>
               </StyledTableCell>
-            </StyledTableBodyRow>
+            </StyledTableRow>
           ))}
         </>
       );
     }
 
     return jobPostings?.map((job) => (
-      <StyledTableBodyRow
+      <StyledTableRow
         key={job.id}
         onClick={() => router.push(`/dashboard/job-posting/${job.id}/submissions`)}
       >
         <StyledTableCell>
           <Stack>
-            <StyledTypography textTransform={'capitalize'} mb={3}>
-           {job.title}
-            </StyledTypography>
+            <Stack direction='row' gap={1}>
+              <StyledTypography className="job-title" textTransform={'capitalize'} mb={3}>
+                {job.title}
+              </StyledTypography>
+              <Box
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const url = `${window.location.origin}/job-openings/${job.id}`;
+                  navigator.clipboard.writeText(url);
+                  setSnackbarOpen(true);
+                }}
+                sx={{
+                  
+                }}
+                title="Copy job link"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M11.4 22.75H7.6C3.21 22.75 1.25 20.79 1.25 16.4V12.6C1.25 8.21 3.21 6.25 7.6 6.25H10.6C11.01 6.25 11.35 6.59 11.35 7C11.35 7.41 11.01 7.75 10.6 7.75H7.6C4.02 7.75 2.75 9.02 2.75 12.6V16.4C2.75 19.98 4.02 21.25 7.6 21.25H11.4C14.98 21.25 16.25 19.98 16.25 16.4V13.4C16.25 12.99 16.59 12.65 17 12.65C17.41 12.65 17.75 12.99 17.75 13.4V16.4C17.75 20.79 15.79 22.75 11.4 22.75Z" fill="#292D32" />
+                  <path d="M17.0001 14.15H13.8001C10.9901 14.15 9.8501 13.01 9.8501 10.2V6.99999C9.8501 6.69999 10.0301 6.41999 10.3101 6.30999C10.5901 6.18999 10.9101 6.25999 11.1301 6.46999L17.5301 12.87C17.7401 13.08 17.8101 13.41 17.6901 13.69C17.5801 13.97 17.3001 14.15 17.0001 14.15ZM11.3501 8.80999V10.2C11.3501 12.19 11.8101 12.65 13.8001 12.65H15.1901L11.3501 8.80999Z" fill="#292D32" />
+                  <path d="M15.6001 2.75H11.6001C11.1901 2.75 10.8501 2.41 10.8501 2C10.8501 1.59 11.1901 1.25 11.6001 1.25H15.6001C16.0101 1.25 16.3501 1.59 16.3501 2C16.3501 2.41 16.0101 2.75 15.6001 2.75Z" fill="#292D32" />
+                  <path d="M7 5.75C6.59 5.75 6.25 5.41 6.25 5C6.25 2.93 7.93 1.25 10 1.25H12.62C13.03 1.25 13.37 1.59 13.37 2C13.37 2.41 13.03 2.75 12.62 2.75H10C8.76 2.75 7.75 3.76 7.75 5C7.75 5.41 7.41 5.75 7 5.75Z" fill="#292D32" />
+                  <path d="M19.1899 17.75C18.7799 17.75 18.4399 17.41 18.4399 17C18.4399 16.59 18.7799 16.25 19.1899 16.25C20.3299 16.25 21.2499 15.32 21.2499 14.19V8C21.2499 7.59 21.5899 7.25 21.9999 7.25C22.4099 7.25 22.7499 7.59 22.7499 8V14.19C22.7499 16.15 21.1499 17.75 19.1899 17.75Z" fill="#292D32" />
+                  <path d="M22 8.74999H19C16.34 8.74999 15.25 7.65999 15.25 4.99999V1.99999C15.25 1.69999 15.43 1.41999 15.71 1.30999C15.99 1.18999 16.31 1.25999 16.53 1.46999L22.53 7.46999C22.74 7.67999 22.81 8.00999 22.69 8.28999C22.58 8.56999 22.3 8.74999 22 8.74999ZM16.75 3.80999V4.99999C16.75 6.82999 17.17 7.24999 19 7.24999H20.19L16.75 3.80999Z" fill="#292D32" />
+                </svg>
+              </Box>
+            </Stack>
             <Stack direction='row' gap={1}>
               <StyledSubtitleTypography>
                 {job.job_type}
@@ -321,9 +350,18 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
             </Box>
           </Box>
         </StyledTableCell>
-      </StyledTableBodyRow>
+      </StyledTableRow>
     ));
   };
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  const SuccessIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22.75C6.07 22.75 1.25 17.93 1.25 12C1.25 6.07 6.07 1.25 12 1.25C17.93 1.25 22.75 6.07 22.75 12C22.75 17.93 17.93 22.75 12 22.75ZM12 2.75C6.9 2.75 2.75 6.9 2.75 12C2.75 17.1 6.9 21.25 12 21.25C17.1 21.25 21.25 17.1 21.25 12C21.25 6.9 17.1 2.75 12 2.75Z" fill="#FFFFFF" />
+      <path d="M10.58 15.58C10.38 15.58 10.19 15.5 10.05 15.36L7.22 12.53C6.93 12.24 6.93 11.76 7.22 11.47C7.51 11.18 7.99 11.18 8.28 11.47L10.58 13.77L15.72 8.63001C16.01 8.34001 16.49 8.34001 16.78 8.63001C17.07 8.92001 17.07 9.40001 16.78 9.69001L11.11 15.36C10.97 15.5 10.78 15.58 10.58 15.58Z" fill="#FFFFFF" />
+    </svg>
+  );
 
   return (
     <DashboardCard customStyle={{ padding: '0px', ...customStyle }}>
@@ -474,20 +512,65 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
               </TableHead>
               <TableBody>
                 {jobPostings.length > 0 ? renderTableContent() : (
-                  <StyledTableBodyRow>
+                  <StyledTableRow>
                     <StyledTableCell colSpan={7} sx={{ textAlign: 'center' }}>
                       <Box>
                         <Typography>No job postings found. <Typography onClick={handleOpen} sx={{ color: 'primary.main', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}>Create a new job posting</Typography></Typography>
 
                       </Box>
                     </StyledTableCell>
-                  </StyledTableBodyRow>
+                  </StyledTableRow>
                 )}
               </TableBody>
             </Table>
           </Box>
         </Box>
       </Box>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{
+          zIndex: 9999,
+        }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity="success"
+          icon={<SuccessIcon />}
+          sx={{
+            minWidth: '300px',
+            backgroundColor: 'primary.main',
+            color: 'secondary.light',
+            borderRadius: '100px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            '& .MuiAlert-icon': {
+              color: '#fff',
+              marginRight: '8px',
+              padding: 0,
+            },
+            '& .MuiAlert-message': {
+              padding: '6px 0',
+              fontSize: '15px',
+              textAlign: 'center',
+              flex: 'unset',
+            },
+            '& .MuiAlert-action': {
+              padding: '0 8px 0 0',
+              marginRight: 0,
+              '& .MuiButtonBase-root': {
+                color: '#fff',
+                padding: 1,
+              },
+            },
+          }}
+        >
+          Job opening link has been copied to clipboard
+        </Alert>
+      </Snackbar>
     </DashboardCard>
   );
 };
