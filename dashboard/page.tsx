@@ -34,7 +34,7 @@ import theme from '@/utils/theme';
 import DashboardCard from './components/shared/DashboardCard';
 import Notifications from './components/dashboard/Notifications';
 import EmailTemplates from './components/dashboard/EmailTemplates';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Calendar from '@/app/components/Assessments';
 import { CalendlyEvent } from '@/app/types/calendly';
 import Assessment from '@/app/components/Assessment';
@@ -89,8 +89,8 @@ const statCards = [
       </SvgIcon>
     ),
     color: '#FD8535',
-    id: 'interviews',
-    title: "Upcoming Interviews",
+    id: 'assessments',
+    title: "Assessments",
     value: 0,
   },
 ];
@@ -395,6 +395,9 @@ const Dashboard = () => {
 
   // Add a state to track if all data is loaded
   const [isAllDataLoaded, setIsAllDataLoaded] = useState(false);
+
+  const searchParams = useSearchParams();
+  const company_id = searchParams.get('company_id');
 
   useEffect(() => {
     // Get profile data from localStorage
@@ -889,8 +892,8 @@ const Dashboard = () => {
               </Typography>
               <Stack direction={'row'} spacing={3} flexWrap={'nowrap'} sx={{ padding: 0, margin: 0 }}>
                 {statistics.map((card, index) => {
-                  if (card.id === 'interviews') {
-                    return <StatCard key={index} card={{ ...card, value: calendlyEvents.length }} index={index} length={statistics.length} />
+                  if (card.id === 'assessments') {
+                    return <StatCard key={index} card={{ ...card, value: assessments.length }} index={index} length={statistics.length} />
                   }
                   return <StatCard key={index} card={card} index={index} length={statistics.length} />
                 })}
@@ -920,7 +923,7 @@ const Dashboard = () => {
               <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
                 <Assessment
                   customStyle={{ height: '100%' }}
-                  assessments={assessments}
+                  assessments={assessments.slice(0, 5)}
                   loading={loading}
                   error={calendlyError}
                 />

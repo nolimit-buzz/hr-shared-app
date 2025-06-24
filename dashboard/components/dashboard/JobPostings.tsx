@@ -194,7 +194,15 @@ const StyledTableBodyRow = styled(TableRow)(({ theme }) => ({
 const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, customStyle = {}, isLoading = false }: JobPostingsProps) => {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const userProfile = localStorage.getItem('userProfile');
+    if (userProfile) {
+      const userProfileData = JSON.parse(userProfile);
+      setCompanyId(userProfileData.companyInfo.company_id);
+    }
+  }, []);
   const handleStatusChange = (_event: React.SyntheticEvent, newValue: 'all' | 'active' | 'close') => {
     setStatusFilter(newValue);
   };
@@ -273,7 +281,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
               <Box
                 onClick={(e) => {
                   e.stopPropagation();
-                  const url = `${window.location.origin}/job-openings/${job.id}`;
+                  const url = `${window.location.origin}/job-openings/${job.id}?company_id=${companyId}`;
                   navigator.clipboard.writeText(url);
                   setSnackbarOpen(true);
                 }}
@@ -345,7 +353,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: 'center' }}>
             <Box>
               <Typography color="rgba(17, 17, 17, 0.84)" fontWeight={500} fontSize={'16px'}>
-                {job.stage_counts.rejection}
+                {job.stage_counts.archived}
               </Typography>
             </Box>
           </Box>
@@ -506,7 +514,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
                     Accepted
                   </StyledTableHeaderCell>
                   <StyledTableHeaderCell>
-                    Rejected
+                    Archived
                   </StyledTableHeaderCell>
                 </StyledTableHeaderRow>
               </TableHead>

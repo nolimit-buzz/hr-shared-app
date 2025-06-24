@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axios, { AxiosRequestConfig } from "axios";
 import {
   Container,
@@ -42,6 +42,40 @@ interface JobData {
   date?: string;
   company_website?: string;
   company_size?: string;
+}
+
+interface CompanyInfo {
+  company_id: number;
+  about_company: string;
+  company_website: string;
+  benefit: string;
+  booking_link: string;
+  company_name: string;
+  job_title: string;
+  number_of_employees: string;
+  company_logo: boolean | string;
+}
+
+interface PersonalInfo {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+}
+
+interface CompanyData {
+  success: boolean;
+  user_id: number;
+  personal_info: PersonalInfo;
+  company_info: CompanyInfo;
+  notifications: {
+    new_stage_notification: string;
+    skill_assessment_notification: string;
+    interviews_notification: string;
+    archived_notification: string;
+    acceptance_notification: string;
+    rejection_notification: string;
+  };
 }
 
 const Banner = styled(Box)(({ theme }) => ({
@@ -117,10 +151,17 @@ const StyledButton = styled(Button)(({ theme }) => ({
 const JobDetailsPage = () => {
   const theme = useTheme();
   const { job_id } = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [jobData, setJobData] = useState<JobData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  const [companyData, setCompanyData] = useState<CompanyData | null>(null);
+  const [companyLoading, setCompanyLoading] = useState(false);
+  const [companyError, setCompanyError] = useState("");
+
+  const company_id = searchParams.get('company_id');
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -151,6 +192,36 @@ const JobDetailsPage = () => {
 
     fetchJobDetails();
   }, [job_id]);
+
+  useEffect(() => {
+    const fetchCompanyDetails = async () => {
+      if (!company_id) {
+        console.log("No company_id provided in URL parameters");
+        return;
+      }
+
+      try {
+        setCompanyLoading(true);
+        setCompanyError("");
+        const response = await axios.get(
+          `https://app.elevatehr.ai/wp-json/elevatehr/v1/company/profile?user_id=${company_id}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        setCompanyData(response.data);
+        setCompanyLoading(false);
+      } catch (err) {
+        console.error("Error fetching company details:", err);
+        setCompanyError("Failed to fetch company details");
+        setCompanyLoading(false);
+      }
+    };
+
+    fetchCompanyDetails();
+  }, [company_id]);
 
   if (loading) {
     return (
@@ -523,7 +594,6 @@ const JobDetailsPage = () => {
               sx={{
                 backgroundColor: "#fff",
                 borderRadius: "8px",
-                // padding: "24px",
                 marginBottom: "0",
               }}
             >
@@ -537,16 +607,29 @@ const JobDetailsPage = () => {
               >
                 
                 <Box sx={{ display: 'flex', marginBottom: '24px' }}>
-                  <Image
-                    src="/images/logos/logo.svg"
-                    alt="Company Logo"
-                    width={200}
-                    height={200}
-                    style={{
-                      maxWidth: "200px",
-                      height: "auto",
-                    }}
-                  />
+                  {companyData?.company_info?.company_logo ? (
+                    <Image
+                      src={companyData.company_info.company_logo as string}
+                      alt={`${companyData.company_info.company_name} Logo`}
+                      width={200}
+                      height={200}
+                      style={{
+                        maxWidth: "200px",
+                        height: "auto",
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      src="/images/logos/logo.svg"
+                      alt="Company Logo"
+                      width={200}
+                      height={200}
+                      style={{
+                        maxWidth: "200px",
+                        height: "auto",
+                      }}
+                    />
+                  )}
                 </Box>
 
                 <Stack direction="row" alignItems="center" spacing={2} sx={{ marginBottom: '16px' }}>
@@ -588,9 +671,9 @@ const JobDetailsPage = () => {
                         fontWeight: 400,
                       }}
                     >
-                      {jobData?.company_website || 'elevatehr.ai'}
-                  </Typography>
-                </Stack>
+                      {companyData?.company_info?.company_website || jobData?.company_website || 'elevatehr.ai'}
+                    </Typography>
+                  </Stack>
 
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <svg
@@ -637,27 +720,23 @@ const JobDetailsPage = () => {
                         fontWeight: 400,
                       }}
                     >
-                      {jobData?.company_size || '50-200 '}
-                  </Typography>
-                </Stack>
+                      {companyData?.company_info?.number_of_employees || jobData?.company_size || '50-200'}
+                    </Typography>
+                  </Stack>
                 </Stack>
 
                 <Box>
                   <Typography sx={{ color: "rgba(17, 17, 17, 0.84)" }}>
-                    At ElevateHR, we are redefining the future of human resource
-                    management by providing innovative, technology-driven
-                    solutions that empower businesses to optimize their
-                    workforce. 
+                    {companyData?.company_info?.about_company || ""}
                   </Typography>
-            </Box>
+                </Box>
                 <a href={`/job-openings/${job_id}/apply`}>
-            <StyledButton
-              variant="contained"
-              fullWidth
-                  // onClick={() => router.push(`/job-openings/${job_id}/apply`)}
-            >
-              Apply for this Job
-            </StyledButton>
+                  <StyledButton
+                    variant="contained"
+                    fullWidth
+                  >
+                    Apply for this Job
+                  </StyledButton>
                 </a>
                
               </Stack>
