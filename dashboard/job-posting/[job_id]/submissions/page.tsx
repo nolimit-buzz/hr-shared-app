@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
   Box,
   Container,
@@ -14,6 +14,7 @@ import {
   CircularProgress,
   Stack,
   Pagination,
+  Skeleton,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
@@ -39,6 +40,7 @@ import {
 import MobileStageDropdown from '@/app/dashboard/components/MobileStageDropdown';
 import CandidateSkeletonLoader from '@/app/dashboard/components/CandidateSkeletonLoader';
 import AssessmentIcon from '@/app/dashboard/components/AssessmentIcon';
+import Link from "next/link";
 
 // Remove unused styled components
 const PrimaryButton = styled(Button)(({ theme }) => ({
@@ -62,7 +64,17 @@ const PrimaryButton = styled(Button)(({ theme }) => ({
 
 export default function Home() {
   const theme = useTheme();
-  const [primaryTabValue, setPrimaryTabValue] = useState(0);
+  const router = useRouter();
+  const params = useParams();
+  const searchParams = useSearchParams();
+
+  // Get the view parameter from URL
+  const viewParam = searchParams.get('view');
+
+  // Set initial primary tab value based on view parameter
+  const [primaryTabValue, setPrimaryTabValue] = useState(() => {
+    return viewParam === '1' ? 1 : 0;
+  });
   const [subTabValue, setSubTabValue] = useState(0);
   const [selectedAssessmentType, setSelectedAssessmentType] = useState(0);
   const [quickActionsAnchor, setQuickActionsAnchor] =
@@ -112,21 +124,23 @@ export default function Home() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [perPage] = useState(10);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
-  const router = useRouter();
-  const params = useParams();
-
+  // Simplified getJobId function
   const getJobId = useCallback((): string => {
     return params["job_id"] as string;
   }, [params]);
 
+  // Fetch job details
   useEffect(() => {
     const fetchJobDetails = async () => {
+      if (!params["job_id"]) return; // Guard against undefined job_id
+
       setLoading(true);
       setError(null);
       try {
         const token = localStorage.getItem("jwt");
-        const jobId = getJobId();
+        const jobId = params["job_id"] as string;
         const response = await fetch(
           `https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${jobId}?sort_by=match_score&sort_order=desc`,
           {
@@ -161,24 +175,27 @@ export default function Home() {
     };
 
     fetchJobDetails();
-  }, [getJobId]);
+  }, [params["job_id"]]); // Direct dependency on params["job_id"]
 
-    const fetchCandidates = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem("jwt");
-        const jobId = getJobId();
-        const stage = subTabValue === 0 ? "new" : getStageValue(subTabValue);
+  // Fetch candidates
+  const fetchCandidates = useCallback(async () => {
+    if (!params["job_id"]) return; // Guard against undefined job_id
+
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("jwt");
+      const jobId = params["job_id"] as string;
+      const stage = subTabValue === 0 ? "new" : getStageValue(subTabValue);
       const url = new URL(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${jobId}/applications`);
       url.searchParams.append('stage', stage);
       url.searchParams.append('page', page.toString());
       url.searchParams.append('per_page', perPage.toString());
-      
+
       // Add logging for debugging
       console.log('Selected Assessment Type:', selectedAssessmentType);
       console.log('Assessments:', assessments);
-      
+
       if (stage === 'skill_assessment' && selectedAssessmentType > 0) {
         // Subtract 1 because index 0 is "All" tab
         const assessmentType = assessments[selectedAssessmentType - 1]?.type;
@@ -190,32 +207,32 @@ export default function Home() {
 
       console.log('Final URL:', url.toString());
       const response = await fetch(url.toString(), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         cache: "no-store",
       });
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch candidates: ${response.status}`);
-        }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch candidates: ${response.status}`);
+      }
 
-        const data = await response.json();
-        setCandidates(data);
-        setFilteredCandidates(data);
+      const data = await response.json();
+      setCandidates(data);
+      setFilteredCandidates(data);
       setTotalPages(data.total_pages);
       setTotalItems(data.total);
-        setLoading(false);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
+      setLoading(false);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
         setError("Failed to fetch candidates");
-        }
-        setLoading(false);
       }
-    };
+      setLoading(false);
+    }
+  }, [params["job_id"], subTabValue, selectedAssessmentType, page, perPage, assessments]);
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -225,7 +242,7 @@ export default function Home() {
     if (primaryTabValue === 0) {
       fetchCandidates();
     }
-  }, [getJobId, primaryTabValue, subTabValue, selectedAssessmentType, page]);
+  }, [fetchCandidates, primaryTabValue]);
 
   useEffect(() => {
     console.log("Job details received:", jobDetails);
@@ -242,7 +259,20 @@ export default function Home() {
     if (jobDetails) {
       loadSkills();
     }
-  }, [getJobId, jobDetails]);
+  }, [jobDetails]);
+
+  useEffect(() => {
+    // Adjust the key if your localStorage user profile uses a different key
+    const userProfile = localStorage.getItem("userProfile");
+    if (userProfile) {
+      try {
+        const parsed = JSON.parse(userProfile);
+        setCompanyId(parsed.companyInfo.company_id || parsed.user_id || null);
+      } catch {
+        setCompanyId(null);
+      }
+    }
+  }, []);
 
   const getStageValue = (tabValue: number): StageType => {
     switch (tabValue) {
@@ -284,7 +314,7 @@ export default function Home() {
           .split("-")
           .map((num) => parseInt(num));
         if (minYears && !maxYears) {
-        queryParams.append("min_experience", minYears.toString());
+          queryParams.append("min_experience", minYears.toString());
         }
         if (minYears && maxYears) {
           queryParams.append(
@@ -444,22 +474,22 @@ export default function Home() {
           throw new Error('Assessment ID not found');
         }
 
-      const response = await fetch(
+        const response = await fetch(
           'https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/send-job-assessment',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+            },
+            body: JSON.stringify({
               application_ids: entries,
               assessment_id: assessmentId
             })
           }
         );
 
-      if (!response.ok) {
+        if (!response.ok) {
           throw new Error('Failed to send assessment');
         }
 
@@ -470,8 +500,8 @@ export default function Home() {
           "https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/move-stage",
           {
             method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+            headers: {
+              "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
@@ -486,8 +516,7 @@ export default function Home() {
         }
 
         handleNotification(
-          `Successfully moved ${entries.length} candidate${
-            entries.length > 1 ? "s" : ""
+          `Successfully moved ${entries.length} candidate${entries.length > 1 ? "s" : ""
           } to ${stage.replace("_", " ")}`,
           "success"
         );
@@ -668,10 +697,10 @@ export default function Home() {
       if (data.status === "success" && Array.isArray(data.assessments)) {
         setAssessments(data.assessments);
         console.log('Assessments set:', data.assessments);
-        
+
         // Update dynamic phase options with assessment options
         const assessmentOptions = data.assessments.map((assessment: Assessment) => ({
-          label: `Send ${assessment.type.split('_').map(word => 
+          label: `Send ${assessment.type.split('_').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ')}`,
           icon: AssessmentIcon,
@@ -721,6 +750,58 @@ export default function Home() {
   const handleFilterMenuClose = () => {
     setFilterMenuAnchor(null);
   };
+
+  // Add skeleton loader for job description
+  const JobDescriptionSkeleton = () => (
+    <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', width: '100%' }}>
+      {/* Left Sidebar Skeleton */}
+      <Box
+        sx={{
+          width: { xs: '100%', md: 280 },
+          minWidth: 220,
+          bgcolor: '#fff', // Changed to white
+          borderRadius: '16px',
+          p: 3,
+          boxShadow: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          height: 240,
+        }}
+      >
+        <Skeleton variant="text" width="80%" height={32} sx={{ mb: 1 }} />
+        <Skeleton variant="rounded" width={80} height={28} sx={{ mb: 1 }} />
+        <Skeleton variant="rounded" width={60} height={28} sx={{ mb: 1 }} />
+        <Skeleton variant="rounded" width={120} height={28} sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" width="60%" height={24} sx={{ mt: 2 }} />
+      </Box>
+
+      {/* Main Job Details Skeleton */}
+      <Box
+        sx={{
+          flex: 1,
+          bgcolor: '#fff',
+          borderRadius: '16px',
+          boxShadow: '0px 4px 24px rgba(17, 17, 17, 0.06)',
+          p: 4,
+          minHeight: 400,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+        }}
+      >
+        <Skeleton variant="circular" width={48} height={48} sx={{ mb: 2 }} />
+        <Skeleton variant="text" width="40%" height={32} />
+        <Skeleton variant="rectangular" width="100%" height={40} sx={{ mb: 2, borderRadius: 1 }} />
+        <Skeleton variant="text" width="30%" height={28} sx={{ mb: 1 }} />
+        <Skeleton variant="rectangular" width="100%" height={60} sx={{ mb: 2, borderRadius: 1 }} />
+        <Skeleton variant="text" width="35%" height={28} sx={{ mb: 1 }} />
+        <Skeleton variant="rectangular" width="100%" height={80} sx={{ mb: 2, borderRadius: 1 }} />
+        <Skeleton variant="text" width="25%" height={28} sx={{ mb: 1 }} />
+        <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
+      </Box>
+    </Box>
+  );
 
   return (
     <Box
@@ -781,28 +862,36 @@ export default function Home() {
               <ArrowBackIcon />
             </IconButton>
             <Typography
+            className="job-title"
               variant="h5"
               sx={{
                 fontSize: { xs: "18px", sm: "24px" },
                 fontWeight: 600,
                 color: "rgba(17, 17, 17, 0.84)",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
               }}
             >
-              {/* {jobDetails?.level && (
-                <Typography
-                  component="span"
-                  sx={{
-                    mr: 1,
-                    fontSize: { xs: "18px", sm: "24px" },
-                    fontWeight: 600,
-                    color: "rgba(17, 17, 17, 0.84)",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {jobDetails.level}
-                </Typography>
-              )} */}
-              {jobDetails?.title}
+              {getJobId() ? (
+                <span className="public-link" style={{ display: "inline-flex", alignItems: "center" }}>
+                  <span className="job-title">{jobDetails?.title}</span>
+                  <Link
+                    href={`/job-openings/${getJobId()}${companyId ? `?company_id=${companyId}` : ""}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-flex", alignItems: "center", marginLeft: 8 }}
+                    title="View public job posting"
+                  >
+                    <svg style={{ transform: 'rotate(45deg)' }}  width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18.0701 10.32C17.8801 10.32 17.6901 10.25 17.5401 10.1L12.0001 4.56L6.46012 10.1C6.17012 10.39 5.69012 10.39 5.40012 10.1C5.11012 9.81 5.11012 9.33 5.40012 9.04L11.4701 2.97C11.7601 2.68 12.2401 2.68 12.5301 2.97L18.6001 9.04C18.8901 9.33 18.8901 9.81 18.6001 10.1C18.4601 10.25 18.2601 10.32 18.0701 10.32Z" fill="#292D32" />
+                      <path d="M12 21.25C11.59 21.25 11.25 20.91 11.25 20.5V3.67C11.25 3.26 11.59 2.92 12 2.92C12.41 2.92 12.75 3.26 12.75 3.67V20.5C12.75 20.91 12.41 21.25 12 21.25Z" fill="#292D32" />
+                    </svg>
+                  </Link>
+                </span>
+              ) : (
+                jobDetails?.title
+              )}
             </Typography>
           </Box>
           <PrimaryButton
@@ -883,7 +972,7 @@ export default function Home() {
                 hasActiveFilters={hasActiveFilters}
                 sx={{ bgcolor: '#FFFFFF', borderRadius: 2, p: 2 }}
               />
-                </Box>
+            </Box>
 
             {/* Mobile Filter Dialog */}
             <FilterSection
@@ -1154,9 +1243,9 @@ export default function Home() {
                           (option) => {
                             console.log('Rendering option:', option);
                             return (
-                            <Button
-                              key={option.action}
-                              variant="outlined"
+                              <Button
+                                key={option.action}
+                                variant="outlined"
                                 startIcon={
                                   isMovingStage === option.action ? (
                                     <CircularProgress size={20} />
@@ -1168,13 +1257,13 @@ export default function Home() {
                                   console.log('Option clicked:', option);
                                   handleUpdateStages({
                                     stage: option.action as StageType,
-                                    assessmentType: option.action.startsWith('assessment_') 
+                                    assessmentType: option.action.startsWith('assessment_')
                                       ? option.action.replace('assessment_', '')
                                       : undefined
                                   });
                                 }}
-                              disabled={isMovingStage.length > 0}
-                              sx={{
+                                disabled={isMovingStage.length > 0}
+                                sx={{
                                   color: "rgba(17, 17, 17, 0.84)",
                                   borderColor: "rgba(17, 17, 17, 0.12)",
                                   "&:hover": {
@@ -1187,7 +1276,7 @@ export default function Home() {
                                 }}
                               >
                                 {isMovingStage === option.action ? "Moving..." : option.label}
-                            </Button>
+                              </Button>
                             );
                           }
                         )}
@@ -1217,7 +1306,7 @@ export default function Home() {
                     >
                       <Tab
                         label="All"
-                          sx={{
+                        sx={{
                           textTransform: 'none',
                           color: theme.palette.grey[100],
                           '&.Mui-selected': {
@@ -1228,7 +1317,7 @@ export default function Home() {
                       {assessments?.map((assessment, index) => (
                         <Tab
                           key={index}
-                          label={assessment.type.split('_').map(word => 
+                          label={assessment.type.split('_').map(word =>
                             word.charAt(0).toUpperCase() + word.slice(1)
                           ).join(' ')}
                           sx={{
@@ -1237,19 +1326,19 @@ export default function Home() {
                             '&.Mui-selected': {
                               color: theme.palette.secondary.main,
                             },
-                              }}
-                            />
-                          ))}
+                          }}
+                        />
+                      ))}
                     </Tabs>
-                        </Box>
+                  </Box>
                 )}
 
                 {/* Candidates list */}
                 {loading ? (
                   <CandidateSkeletonLoader />
                 ) : filteredCandidates?.applications?.length === 0 ? (
-                  <EmptyState 
-                    subTabValue={subTabValue} 
+                  <EmptyState
+                    subTabValue={subTabValue}
                     assessmentType={subTabValue === 1 ? assessments[selectedAssessmentType]?.type : undefined}
                   />
                 ) : (
@@ -1264,42 +1353,42 @@ export default function Home() {
                         display: { xs: "none", lg: "block" },
                       }}
                     >
-                        {filteredCandidates?.applications?.map((candidate) => (
-                          <Box
-                            key={candidate.id}
-                            sx={{
+                      {filteredCandidates?.applications?.map((candidate) => (
+                        <Box
+                          key={candidate.id}
+                          sx={{
                             backgroundColor: "white",
-                              borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-                              "&:last-child": {
-                                borderBottom: "none",
-                              },
-                            }}
-                          >
-                            <CandidateListSection
-                              candidate={candidate}
-                              isSelected={selectedEntries?.includes(candidate.id)}
-                              onSelectCandidate={handleSelectCandidate}
-                        onUpdateStages={(
-                          stage: string,
-                          entries: number[]
-                        ) =>
-                          handleUpdateStages({
-                            stage: stage as StageType,
-                            entries,
-                          })
-                        }
-                        disableSelection={
-                          subTabValue === 3 ||
-                          filteredCandidates?.applications?.length === 1
-                        }
-                              currentStage={getStageValue(subTabValue)}
-                              selectedEntries={selectedEntries}
-                              onNotification={handleNotification}
-                        phaseOptions={dynamicPhaseOptions}
-                            />
-                          </Box>
-                        ))}
-                      </Box>
+                            borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+                            "&:last-child": {
+                              borderBottom: "none",
+                            },
+                          }}
+                        >
+                          <CandidateListSection
+                            candidate={candidate}
+                            isSelected={selectedEntries?.includes(candidate.id)}
+                            onSelectCandidate={handleSelectCandidate}
+                            onUpdateStages={(
+                              stage: string,
+                              entries: number[]
+                            ) =>
+                              handleUpdateStages({
+                                stage: stage as StageType,
+                                entries,
+                              })
+                            }
+                            disableSelection={
+                              subTabValue === 3 ||
+                              filteredCandidates?.applications?.length === 1
+                            }
+                            currentStage={getStageValue(subTabValue)}
+                            selectedEntries={selectedEntries}
+                            onNotification={handleNotification}
+                            phaseOptions={dynamicPhaseOptions}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
 
                     {/* Mobile View - componentized */}
                     <MobileCandidateGrid
@@ -1314,20 +1403,28 @@ export default function Home() {
                       getSkillChipColor={getSkillChipColor}
                       theme={theme}
                     />
-                    </>
-                  )}
+                  </>
+                )}
               </Paper>
             </Box>
           </Stack>
         ) : (
-          <JobDescription
-            jobDetails={jobDetails}
-            loading={loading}
-            error={error}
-            getJobId={getJobId}
-            setError={setError}
-            setPrimaryTabValue={setPrimaryTabValue}
-          />
+          // Job description tab with skeleton loader
+          <Paper sx={{ bgcolor: 'transparent', boxShadow: 'none' }}>
+            {loading ? (
+              <JobDescriptionSkeleton />
+            ) : jobDetails ? (
+              <JobDescription jobDetails={jobDetails} loading={loading} error={error} getJobId={getJobId} setError={setError} setPrimaryTabValue={setPrimaryTabValue} />
+            ) : error ? (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="error">{error}</Typography>
+              </Box>
+            ) : (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="textSecondary">No job details available</Typography>
+              </Box>
+            )}
+          </Paper>
         )}
 
         {/* Add pagination controls */}
@@ -1342,13 +1439,13 @@ export default function Home() {
                 size="large"
                 showFirstButton
                 showLastButton
-        sx={{
+                sx={{
                   '& .MuiPaginationItem-root': {
                     fontSize: '16px',
                     fontWeight: 500,
                   },
                   '& .Mui-selected': {
-            backgroundColor: 'primary.main',
+                    backgroundColor: 'primary.main',
                     color: 'white',
                     '&:hover': {
                       backgroundColor: 'primary.dark',
@@ -1356,15 +1453,15 @@ export default function Home() {
                   },
                 }}
               />
-              </Box>
-            <Typography 
-              variant="body2" 
-              color="grey.200" 
-              align="center" 
+            </Box>
+            <Typography
+              variant="body2"
+              color="grey.200"
+              align="center"
               sx={{ mb: 3 }}
             >
               Showing <span style={{ fontWeight: 600 }}>{((page - 1) * perPage) + 1}</span> to <span style={{ fontWeight: 600 }}>{Math.min(page * perPage, totalItems)}</span> of <span style={{ fontWeight: 600 }}>{totalItems}</span> entries
-                </Typography>
+            </Typography>
           </>
         )}
       </Container>

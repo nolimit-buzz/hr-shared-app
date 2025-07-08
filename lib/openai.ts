@@ -7,23 +7,39 @@ const openai = new OpenAI({
     apiKey: OPENAI_API_KEY,
     dangerouslyAllowBrowser: true
 });
+const jobDescriptionGenerator = `You are a professional job description writer with expertise in HR and talent acquisition. Create a comprehensive and compelling JSON object for the job title: "\${jobTitle}".
 
-const jobDescriptionGenerator = `You are a professional job description writer. Create a JSON object with the following structure for the job title: "\${jobTitle}".
+Write in a professional, engaging tone that attracts top talent while being specific and actionable. Use industry-standard terminology and ensure the description is inclusive and accessible.
 
 The JSON must follow this exact structure:
 {
   "jobTitle": "\${jobTitle}",
-  "aboutTheRole": "A detailed description of the role.",
-  "jobResponsibilities": "Responsibility 1.\\nResponsibility 2.\\nResponsibility 3.\\nResponsibility 4.\\nResponsibility 5.",
+  "aboutTheRole": "Write a compelling 3-4 sentence overview that clearly explains: (1) the core purpose and impact of this role on the organization, (2) key challenges or opportunities the person will tackle, (3) what success looks like in this position, and (4) why this role is exciting for career growth. Be specific about the value this role creates for the business and customers.",
+  "jobResponsibilities": "Create 5-6 specific, measurable responsibilities using bullet points. Each should start with a strong action verb and include specific deliverables, success metrics, or outcomes. Format as: '• [Action verb] [specific task/deliverable] [context/stakeholders] [expected outcome/metric]'. Include responsibilities that span: core execution, strategic planning, collaboration, process improvement, and leadership/mentoring. Make each responsibility distinct and comprehensive.",
   "expectations": [
-    "Qualification 1",
-    "Qualification 2",
-    "Qualification 3",
-    "Qualification 4"
+    "Educational background: Specify degree level, field of study, and acceptable alternatives (e.g., 'Bachelor's degree in Computer Science, Engineering, or related technical field, or equivalent practical experience with demonstrated technical proficiency')",
+    "Professional experience: Include years, specific domain expertise, and proven track record (e.g., '5+ years of experience in software development with demonstrated success in delivering scalable applications and leading technical projects')",
+    "Technical competencies: List specific tools, technologies, programming languages, or methodologies with proficiency levels (e.g., 'Expert-level proficiency in Python, JavaScript, and cloud platforms (AWS/Azure) with experience architecting microservices')",
+    "Core soft skills: Specify communication, leadership, or analytical abilities with context (e.g., 'Exceptional written and verbal communication skills with proven ability to present complex technical concepts to non-technical stakeholders')",
+    "Industry or domain knowledge: Include relevant sector experience, regulations, or specialized knowledge (e.g., 'Experience in fintech or financial services with understanding of regulatory compliance and security requirements')",
+    "Leadership and collaboration: Describe team dynamics, mentoring, or cross-functional work experience (e.g., 'Proven track record of leading cross-functional teams, mentoring junior developers, and driving technical decision-making in collaborative environments')"
   ]
 }
 
-Ensure the response is ONLY valid JSON with no additional text or markdown formatting. Do not include any prefixes like \`\`\`json or \`\`\`.`;
+Content Quality Requirements:
+- Make each responsibility specific with clear deliverables and success criteria
+- Include relevant metrics, timelines, or performance indicators where applicable
+- Ensure expectations are realistic, measurable, and directly related to job success
+- Use active voice and specific action verbs throughout
+- Avoid vague terms like 'support,' 'assist,' or 'help with' - be specific about what the person will accomplish
+- Include both individual contributor and collaborative aspects of the role
+- Consider the seniority level when setting expectations for experience and leadership
+
+Technical Requirements:
+- Ensure the response is ONLY valid JSON with no additional text or markdown formatting
+- Do not include any prefixes like \`\`\`json or \`\`\`
+- All string values must be properly escaped for JSON format
+- Use \\n for line breaks in jobResponsibilities section only`;
 
 export async function generateInput(request: { jobTitle: string, jobLevel: string, field: string }) {
     try {

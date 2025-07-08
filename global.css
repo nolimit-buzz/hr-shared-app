@@ -46,3 +46,21 @@ input {
   font-weight: 400;
   font-size: 16px !important;
 }
+.job-title{
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.job-title:hover{
+  text-decoration: underline;
+  transition: all 0.3s ease;
+}
+.job-title:hover .arrow-link{
+transform: translateX(2px) translateY(-2px);
+transition: all 0.3s ease 0.2s;
+}
+.arrow-link{
+  transition: all 0.3s ease;
+}
+.arrow-link:hover{
+  transform: translateX(2px) translateY(-2px);
+}

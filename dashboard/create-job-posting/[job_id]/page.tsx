@@ -1190,7 +1190,7 @@ const AboutTheJob = () => {
 
   const handleCloseNotification = () => {
     setNotification(prev => ({ ...prev, open: false }));
-    window.location.href = `/dashboard/job-posting/${jobId}/submissions`;
+    window.location.href = `/dashboard/job-posting/${jobId}/submissions?view=1`;
   };
 
   const copyToClipboard = () => {

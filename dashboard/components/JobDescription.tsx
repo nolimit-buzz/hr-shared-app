@@ -93,6 +93,7 @@ const JobDescription = ({ jobDetails, loading, error, getJobId, setError, setPri
     <Stack direction={{ xs: "column", lg: "row" }} gap={{ xs: 2, lg: 4 }}>
       <Card
         sx={{
+          boxShadow: 'none',
           width: { xs: '100%', lg: 308 },
           height: { xs: 'auto', lg: 345 },
           borderRadius: 2,
@@ -208,7 +209,7 @@ const JobDescription = ({ jobDetails, loading, error, getJobId, setError, setPri
         elevation={0}
         sx={{
           width: { xs: '100%', lg: 956 },
-          height: { xs: 'auto', lg: 902 },
+          height: { xs: 'auto' },
           borderRadius: 2,
           position: "relative",
           overflow: "hidden",
