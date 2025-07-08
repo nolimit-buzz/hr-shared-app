@@ -6,7 +6,6 @@ import DashboardCard from '@/app/dashboard/components/shared/DashboardCard';
 import { useTheme } from "@mui/material/styles";
 import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
 import { useRouter } from 'next/navigation';
-import AssessmentIcon from './AssessmentIcon';
 
 interface AssessmentItem {
   id: string;

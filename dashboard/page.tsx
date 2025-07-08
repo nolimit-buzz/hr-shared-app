@@ -625,6 +625,7 @@ const Dashboard = () => {
         const data = await res.json();
         setAssessments(data.assessments);
       } catch (err: any) {
+        console.error("Error fetching assessments:", err);
       } finally {
         setLoading(false);
       }
