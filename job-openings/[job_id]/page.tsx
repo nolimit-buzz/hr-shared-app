@@ -17,6 +17,11 @@ import {
   Divider,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import SchoolIcon from "@mui/icons-material/School";
+import WorkIcon from "@mui/icons-material/Work";
 import Image from 'next/image';
 import metaData from "@/utils/metadata";
 export const dynamic = "force-dynamic";
@@ -384,7 +389,7 @@ const JobDetailsPage = () => {
                       marginBottom: "14px",
                     }}
                   >
-                    We&apos;re looking for a ...
+                    We&apos;re looking for {['a','e','i','o','u'].includes(jobData?.title?.charAt(0)?.toLowerCase() || "lawyer") ? 'an' : 'a'} ...
                   </Typography>
                   <Typography
                     variant="h4"
@@ -627,7 +632,7 @@ const JobDetailsPage = () => {
                   )}
                 </Box>
 
-                <Stack direction="row" alignItems="center" spacing={2} sx={{ marginBottom: '16px' }}>
+                <Stack direction="row" alignItems="center" spacing={2} gap={1} flexWrap="wrap" sx={{ marginBottom: '16px' }}>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <svg
                       width="16"
@@ -670,7 +675,7 @@ const JobDetailsPage = () => {
                     </Typography>
                   </Stack>
 
-                  <Stack direction="row" alignItems="center" spacing={1}>
+                  <Stack direction="row" alignItems="center" spacing={1} ml={0} sx={{ marginLeft: '0px !important' }}>
                     <svg
                       width="16"
                       height="16"

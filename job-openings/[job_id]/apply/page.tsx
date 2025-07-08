@@ -35,7 +35,7 @@ import { LoaderCircle } from "lucide-react";
 import Progress from "@/app/dashboard/layout/progress";
 import axios from "axios";
 import { CheckCircle, Close } from "@mui/icons-material";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
@@ -87,7 +87,7 @@ const StyledFormHelperText = styled(FormHelperText)(({ theme }) => ({
 export default function Typeform({
   params,
 }: {
-  params: { job_id: string , company_id: string};
+  params: { job_id: string };
 }) {
   interface FormField {
     key: string;
@@ -126,7 +126,9 @@ export default function Typeform({
       form.setValue(fieldKey as keyof Inputs, file.name);
     }
   };
-  const companyId = params.company_id;
+  const searchParams = useSearchParams();
+  const companyId = searchParams.get('company_id');
+  console.log(companyId)  
   useEffect(() => {
     const fetchFormData = async () => {
       try {
@@ -306,7 +308,7 @@ export default function Typeform({
     // Close modal after 3 seconds
     setTimeout(() => {
       setShowSuccessModal(false);
-      router.push(`/job-openings/${params.job_id}`);
+      router.push(`/job-openings/${params.job_id}?company_id=${companyId}`);
     }, 3000);
   };
 
@@ -702,7 +704,10 @@ export default function Typeform({
                     }}
                   >
                     {isSubmitting ? (
-                      <CircularProgress size={24} color="inherit" />
+                      <div className="flex items-center justify-center">
+                        <span className="mr-2">Submitting</span>
+                        <CircularProgress size={24} color="inherit" />
+                      </div>
                     ) : (
                       "Submit Application"
                     )}
