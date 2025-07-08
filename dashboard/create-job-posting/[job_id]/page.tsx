@@ -809,29 +809,6 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
   );
 };
 
-// const defaultCustomFields: CustomField[] = [
-//   {
-//     key: 'experience',
-//     label: 'Years of Experience',
-//     type: 'text',
-//     required: true
-//   },
-//   {
-//     key: 'skills',
-//     label: 'Relevant Skills',
-//     type: 'text',
-//     required: true,
-//     description: 'List your relevant skills for this position'
-//   },
-//   {
-//     key: 'availability',
-//     label: 'When can you start?',
-//     type: 'select',
-//     required: true,
-//     options: ['Immediately', 'In 2 weeks', 'In a month', 'In 2 months']
-//   }
-// ];
-
 const AboutTheJob = () => {
   const params = useParams();
   const jobId = params['job_id'];
@@ -1125,6 +1102,24 @@ const AboutTheJob = () => {
     }
   };
 
+  const handleSalaryMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^\d]/g, '');
+    setFormData(prev => ({
+      ...prev,
+      salary_min: value,
+      salary_error: ''
+    }));
+  };
+
+  const handleSalaryMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^\d]/g, '');
+    setFormData(prev => ({
+      ...prev,
+      salary_max: value,
+      salary_error: ''
+    }));
+  };
+
   const handleSkillsChange = (newValue: string[]) => {
     // setTechnicalSkills(newValue);
     setFormData(prev => ({
@@ -1337,22 +1332,121 @@ const AboutTheJob = () => {
               </Stack>
             </Stack>
             <Divider />
-            <Field
-              label="Salary Range"
-              description="Add numeration"
-              value={formatSalaryDisplay(`${formData.salary_min}-${formData.salary_max}`)}
-              onChange={(e) => handleSalaryChange(e.target.value)}
-              error={formData.salary_error}
-              placeholder="50,000-100,000"
-              sx={{
-                '& .MuiInputBase-root': {
-                  '& fieldset': {
-                    borderRadius: '8px',
-                    border: '0.8px solid rgba(17, 17, 17, 0.14) !important',
-                  }
-                },
-              }}
-            />
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems={{ xs: 'flex-start', sm: 'flex-start' }} padding="28px 24px">
+              <Stack spacing={1} minWidth={{ xs: '100%', sm: '280px' }}>
+                <Typography variant="subtitle1" sx={{
+                  color: 'rgba(17, 17, 17, 0.92)',
+                  fontSize: { xs: '18px', sm: '20px' },
+                  fontStyle: 'normal',
+                  fontWeight: 600,
+                  lineHeight: '100%',
+                  letterSpacing: '0.1px',
+                }}>Salary Range</Typography>
+                <Typography sx={{
+                  color: 'rgba(17, 17, 17, 0.68)',
+                  fontSize: { xs: '14px', sm: '16px' },
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: '100%',
+                  letterSpacing: '0.16px',
+                }} variant="body2" color="textSecondary">
+                  Specify the salary range for this position
+                </Typography>
+              </Stack>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ width: '100%', flex: 1 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{
+                    color: 'rgba(17, 17, 17, 0.92)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    mb: 1,
+                  }}>
+                    Minimum Salary
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    placeholder="50,000"
+                    value={formatSalaryDisplay(formData.salary_min)}
+                    onChange={handleSalaryMinChange}
+                    error={!!formData.salary_error}
+                    helperText={formData.salary_error}
+                    InputProps={{
+                      startAdornment: <InputAdornment sx={{ color: 'red' }} position="start">₦</InputAdornment>,
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                        border: '0.8px solid rgba(17, 17, 17, 0.14)',
+                        '& fieldset': {
+                          border: 'none',
+                        },
+                        '&:hover fieldset': {
+                          border: 'none',
+                        },
+                        '&.Mui-focused fieldset': {
+                          border: '1px solid #4444E2',
+                        },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: '16px 12px',
+                        fontSize: '16px',
+                      },
+                    }}
+                  />
+                </Box>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  px: 1,
+                  color: 'rgba(17, 17, 17, 0.48)',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                }}>
+                  to
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography sx={{
+                    color: 'rgba(17, 17, 17, 0.92)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    mb: 1,
+                  }}>
+                    Maximum Salary
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    placeholder="100,000"
+                    value={formatSalaryDisplay(formData.salary_max)}
+                    onChange={handleSalaryMaxChange}
+                    error={!!formData.salary_error}
+                    helperText={formData.salary_error}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">₦</InputAdornment>,
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                        border: '0.8px solid rgba(17, 17, 17, 0.14)',
+                        '& fieldset': {
+                          border: 'none',
+                        },
+                        '&:hover fieldset': {
+                          border: 'none',
+                        },
+                        '&.Mui-focused fieldset': {
+                          border: '1px solid #4444E2',
+                        },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: '16px 12px',
+                        fontSize: '16px',
+                      },
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </Stack>
             <Divider />
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems={{ xs: 'flex-start', sm: 'flex-start' }} padding="28px 24px">
               <Stack spacing={1} minWidth={{ xs: '100%', sm: '280px' }}>

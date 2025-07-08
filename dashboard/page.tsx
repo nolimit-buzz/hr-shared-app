@@ -376,7 +376,6 @@ const Dashboard = () => {
   });
   const [formData, setFormData] = useState({
     title: '',
-    level: 'junior',
     job_type: 'fulltime',
     work_model: 'onsite',
     location: '',
@@ -979,7 +978,7 @@ const Dashboard = () => {
                 sx={{ bgcolor: "#f2f4f6", "& .MuiOutlinedInput-root": { borderColor: "#d7dadf", borderWidth: "0.5px" } }}
               />
             </Stack>
-            <Stack spacing={1}>
+            {/* <Stack spacing={1}>
               <Typography variant="body1" fontWeight={600} color="rgba(17, 17, 17, 0.84)">
                 Level
               </Typography>
@@ -996,7 +995,7 @@ const Dashboard = () => {
                   ))}
                 </RadioGroup>
               </FormControl>
-            </Stack>
+            </Stack> */}
             <Stack spacing={1}>
               <Typography variant="body1" fontWeight={600} color="rgba(17, 17, 17, 0.84)">
                 Job type
