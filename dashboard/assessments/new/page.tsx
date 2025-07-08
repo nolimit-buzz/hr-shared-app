@@ -19,6 +19,7 @@ import {
   Snackbar,
   Alert,
   Autocomplete,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -349,10 +350,7 @@ export default function CreateAssessmentPage() {
     ]);
   };
 
-  // Add effect to generate skills when job title changes
-  useEffect(() => {
     const generateSkills = async () => {
-      if (jobTitle && !isGeneratingSkills) {
         setIsGeneratingSkills(true);
         try {
           const { technical, soft } = await generateSkillsForRole(jobTitle, "");
@@ -362,12 +360,8 @@ export default function CreateAssessmentPage() {
           console.error("Error generating skills:", error);
         } finally {
           setIsGeneratingSkills(false);
-        }
-      }
-    };
 
-    generateSkills();
-  }, [jobTitle]);
+      }}
 
   // Add effect to set default description
   useEffect(() => {
@@ -461,56 +455,6 @@ export default function CreateAssessmentPage() {
             />
           </Box>
 
-          {id && (
-            <Box sx={{ mb: 3 }}>
-              <Typography
-                sx={{
-                  fontWeight: 600,
-                  fontSize: 18,
-                  color: "rgba(17, 17, 17, 0.92)",
-                  mb: 1.5,
-                }}
-              >
-                Level
-              </Typography>
-              <RadioGroup
-                row
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-              >
-                {["Junior", "Mid-level", "Senior"].map((lvl) => (
-                  <FormControlLabel
-                    key={lvl}
-                    value={lvl}
-                    control={<Radio sx={{ display: "none" }} />}
-                    label={
-                      <Box
-                        sx={{
-                          px: 4,
-                          py: 2,
-                          borderRadius: "12px",
-                          border: level === lvl ? "1.5px solid #4444E2" : "1.5px solid #E4E7EC",
-                          bgcolor: "#F4F5F7",
-                          color: "rgba(17, 17, 17, 0.84)",
-                          fontWeight: 500,
-                          fontSize: 18,
-                          cursor: "pointer",
-                          transition: "all 0.2s",
-                          "&:hover": {
-                            borderColor: "#4444E2",
-                          },
-                        }}
-                      >
-                        {lvl}
-                      </Box>
-                    }
-                    sx={{ mr: 2, ml: 0 }}
-                  />
-                ))}
-              </RadioGroup>
-            </Box>
-          )}
-
           <Box sx={{ mb: 3 }}>
             <Typography
               sx={{
@@ -527,11 +471,18 @@ export default function CreateAssessmentPage() {
               freeSolo
               options={generatedSkills}
               value={skills}
+              
               onChange={(event, newValue) => {
                 setSkills(newValue);
               }}
               renderInput={(params) => (
                 <TextField
+                onFocus={()=>{
+                  console.log(isGeneratingSkills, jobTitle.length, generatedSkills.length);
+                  if(!isGeneratingSkills && jobTitle.length > 0 && generatedSkills.length === 0){
+                    generateSkills();
+                  }
+                }}
                   {...params}
                   placeholder="Select or type skills"
                   sx={{
@@ -748,8 +699,8 @@ export default function CreateAssessmentPage() {
             sx={{
               bgcolor: "#4444E2",
               color: "#fff",
-              fontWeight: 600,
-              fontSize: 20,
+              fontWeight: 500,
+              fontSize: 16,
               borderRadius: "12px",
               py: 1.5,
               textTransform: "none",
@@ -762,7 +713,7 @@ export default function CreateAssessmentPage() {
             onClick={type === "technical_assessment" ? () => setOpen(false) : handleCreateAssessment}
             disabled={Boolean(loading || !jobTitle || skills.length === 0 || (id && !level))}
           >
-            {loading ? "Generating..." : type === "technical_assessment" ? "Continue" : "Create Assessment"}
+            {loading ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}><span>Generating assessment</span><CircularProgress size={20} /></div> : type === "technical_assessment" ? "Continue" : "Create Assessment"}
           </Button>
         </DialogContent>
       </Dialog>
@@ -1148,7 +1099,7 @@ export default function CreateAssessmentPage() {
                     }}
                   />
                 ) : (
-                  <Stack width={'100%'} gap={1}>
+                  <Stack width={'100%'} gap={1} mt={1}>
                     {q.options && q.options.map((opt: string, optIdx: number) => (
                       <Stack key={optIdx} direction={'row'} gap={1} alignItems={'center'}>
                         <TextField

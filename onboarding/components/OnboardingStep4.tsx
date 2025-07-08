@@ -4,18 +4,18 @@ import { Typography, TextField, Stack, FormHelperText } from "@mui/material";
 
 interface OnboardingStep4Props {
   data: {
-    company_bio: string;
+    about: string;
   };
-  onUpdate: (data: { company_bio: string }) => void;
+  onUpdate: (data: { about: string }) => void;
 }
 
 const OnboardingStep4: React.FC<OnboardingStep4Props> = ({ data, onUpdate }) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ company_bio: event.target.value });
+    onUpdate({ about: event.target.value });
   };
   
   const minLength = 50;
-  const isError = data.company_bio.length > 0 && data.company_bio.length < minLength;
+  const isError = data.about.length > 0 && data.about.length < minLength;
 
   return (
     <Stack spacing={2}>
@@ -25,18 +25,18 @@ const OnboardingStep4: React.FC<OnboardingStep4Props> = ({ data, onUpdate }) => 
       </Typography>
       <TextField
         fullWidth
-        label="Company Bio"
+        label="About Company"
         multiline
         rows={8}
         placeholder="What makes your company a great place to work?"
-        value={data.company_bio}
+        value={data.about}
         onChange={handleChange}
         variant="outlined"
         sx={{ mt: 2 ,'&.MuiInputLabel-root[data-shrink="false"]': { color: 'grey.200 !important' }}}
         error={isError}
       />
       <FormHelperText sx={{ textAlign: 'right', mt: 1, ...(isError && { color: 'error.main'}) }}>
-        {data.company_bio.length} characters (minimum {minLength})
+        {data.about.length} characters (minimum {minLength})
       </FormHelperText>
     </Stack>
   );

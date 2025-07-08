@@ -55,7 +55,7 @@ const Assessment: React.FC<AssessmentProps> = ({ customStyle, assessments, loadi
           Assessments
           </Typography>
 
-          <Box 
+         {assessments.length > 0 && <Box 
             sx={{ 
               display: "flex", 
               alignItems: "center",
@@ -81,24 +81,13 @@ const Assessment: React.FC<AssessmentProps> = ({ customStyle, assessments, loadi
             <ArrowForwardOutlined
               sx={{ color: "secondary.main", width: 20, height: 20 }}
             />
-          </Box>
+          </Box>}
         </Box>
       
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress size={24} />
-        </Box>
-      ) : error ? (
-        <Typography color="error" sx={{ p: 2 }}>
-          {error}
-        </Typography>
-      ) : assessments.length === 0 ? (
-        <Typography sx={{ p: 2, color: 'rgba(17, 17, 17, 0.6)' }}>
-          No recent assessments
-        </Typography>
-      ) : (
+      
         <List
           sx={{
+            height: 'calc(300px - 70px)',
             width: '100%',
             bgcolor: 'background.paper',
             p: 0,
@@ -123,7 +112,15 @@ const Assessment: React.FC<AssessmentProps> = ({ customStyle, assessments, loadi
             },
           }}
         >
-          {assessments.map((assessment, index) => (
+           {error ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <Typography color="error">{error}</Typography>
+            </Box>
+          ) : assessments.length === 0 ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <Typography color="grey.200">Your recent assessments will appear here</Typography>
+            </Box>
+          ) : assessments.map((assessment, index) => (
             <React.Fragment key={assessment.id}>
               <ListItem
                 alignItems="flex-start"
@@ -239,7 +236,7 @@ const Assessment: React.FC<AssessmentProps> = ({ customStyle, assessments, loadi
             </React.Fragment>
           ))}
         </List>
-      )}
+
       </Box>    
     </DashboardCard>
   );

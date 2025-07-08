@@ -26,10 +26,10 @@ const OnboardingPage = () => {
     const router = useRouter();
     const [activeStep, setActiveStep] = useState(0);
     const [onboardingData, setOnboardingData] = useState({
-        company_website: "",
+        website: "",
         company_logo: null as File | null,
         booking_link: "",
-        company_bio: "",
+        about: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -37,7 +37,7 @@ const OnboardingPage = () => {
     useEffect(() => {
         const token = localStorage.getItem("jwt");
         if (!token) {
-            router.push("/authentication/login");
+            router.push("/");
             return;
         }
     }, [router]);
@@ -59,17 +59,17 @@ const OnboardingPage = () => {
         setError('');
 
         const formData = new FormData();
-        formData.append('company_website', onboardingData.company_website);
+        formData.append('website', onboardingData.website);
         if (onboardingData.company_logo) {
             formData.append('company_logo', onboardingData.company_logo);
         }
         formData.append('booking_link', onboardingData.booking_link);
-        formData.append('company_bio', onboardingData.company_bio);
+        formData.append('about', onboardingData.about);
         formData.append('onboarding_completed', 'true');
 
         try {
             const token = localStorage.getItem('jwt');
-            await axios.post(
+            const response = await axios.post(
                 'https://app.elevatehr.ai/wp-json/elevatehr/v1/company/profile',
                 formData,
                 {
@@ -80,12 +80,12 @@ const OnboardingPage = () => {
                 }
             );
 
-            const userProfile = localStorage.getItem("userProfile");
-            if (userProfile) {
-                const profile = JSON.parse(userProfile);
-                const updatedProfile = { ...profile, onboardingCompleted: true };
-                localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
-            }
+            localStorage.setItem('userProfile', JSON.stringify({
+                personalInfo: response.data.personal_info,
+                companyInfo: response.data.company_info,
+                notifications: response.data.notifications
+              }));
+        
 
             router.push("/dashboard");
 
@@ -99,10 +99,10 @@ const OnboardingPage = () => {
 
     const isStepValid = (activeStep: number) => {
         switch (activeStep) {
-            case 0: return onboardingData.company_website.trim() !== '';
+            case 0: return onboardingData.website.trim() !== '';
             case 1: return onboardingData.company_logo !== null;
             case 2: return onboardingData.booking_link.trim() !== '';
-            case 3: return onboardingData.company_bio.trim().length >= 50;
+            case 3: return onboardingData.about.trim().length >= 50;
             default: return false;
         }
     }

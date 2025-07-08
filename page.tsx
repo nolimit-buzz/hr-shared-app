@@ -7,23 +7,6 @@ import Image from "next/image";
 import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/navigation';
 
-const Banner = styled(Box)(({ theme }) => ({
-  width: '100%',
-  background: theme.palette.primary.main,
-  color: '#fff',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  marginBottom: '28px',
-}));
-
-const Pill = styled(Chip)(({ theme }) => ({
-  padding: '10px 12px',
-  backgroundColor: 'rgba(255, 255, 255, 0.12)',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  borderRadius: '20px',
-  color: '#fff',
-}));
 
 const Login = () => {
   const theme = useTheme();

@@ -20,10 +20,8 @@ import {
   Snackbar,
 } from "@mui/material";
 import DashboardCard from "@/app/dashboard/components/shared/DashboardCard";
-import zIndex from '@mui/material/styles/zIndex';
-import { useRouter } from 'next/navigation';
 import FilterListIcon from '@mui/icons-material/FilterList';
-
+import { useRouter } from 'next/navigation';
 interface JobPosting {
   id: string;
   title: string;
