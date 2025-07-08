@@ -17,13 +17,8 @@ import {
   Divider,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import SchoolIcon from "@mui/icons-material/School";
-import WorkIcon from "@mui/icons-material/Work";
 import Image from 'next/image';
-
+import metaData from "@/utils/metadata";
 export const dynamic = "force-dynamic";
 
 interface JobData {
@@ -671,7 +666,7 @@ const JobDetailsPage = () => {
                         fontWeight: 400,
                       }}
                     >
-                      {companyData?.company_info?.company_website || jobData?.company_website || 'elevatehr.ai'}
+                      {companyData?.company_info?.company_website || jobData?.company_website || metaData?.website}
                     </Typography>
                   </Stack>
 
@@ -730,7 +725,7 @@ const JobDetailsPage = () => {
                     {companyData?.company_info?.about_company || ""}
                   </Typography>
                 </Box>
-                <a href={`/job-openings/${job_id}/apply`}>
+                <a href={`/job-openings/${job_id}/apply?company_id=${companyData?.company_info?.company_id}`}>
                   <StyledButton
                     variant="contained"
                     fullWidth

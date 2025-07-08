@@ -35,7 +35,7 @@ import { LoaderCircle } from "lucide-react";
 import Progress from "@/app/dashboard/layout/progress";
 import axios from "axios";
 import { CheckCircle, Close } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
@@ -87,7 +87,7 @@ const StyledFormHelperText = styled(FormHelperText)(({ theme }) => ({
 export default function Typeform({
   params,
 }: {
-  params: { job_id: string };
+  params: { job_id: string , company_id: string};
 }) {
   interface FormField {
     key: string;
@@ -126,7 +126,7 @@ export default function Typeform({
       form.setValue(fieldKey as keyof Inputs, file.name);
     }
   };
-
+  const companyId = params.company_id;
   useEffect(() => {
     const fetchFormData = async () => {
       try {
@@ -423,7 +423,7 @@ export default function Typeform({
         }}>
           <Button
             variant="outlined"
-            onClick={() => router.push(`/job-openings/${params.job_id}`)}
+            onClick={() => router.push(`/job-openings/${params.job_id}?company_id=${companyId}`)}
             sx={{
               borderColor: 'primary.main',
               color: 'primary.main',
