@@ -230,7 +230,7 @@ interface StatCardProps {
 
 const StatCard = ({ card, index, length }: StatCardProps) => {
   const router = useRouter();
-  
+
   const handleClick = () => {
     if (card.id === 'active_jobs') {
       router.push('/dashboard/job-listings');
@@ -240,16 +240,16 @@ const StatCard = ({ card, index, length }: StatCardProps) => {
   };
 
   return (
-    <Box 
+    <Box
       onClick={handleClick}
-      sx={{ 
+      sx={{
         cursor: (card.id === 'active_jobs' || card.id === 'total_applicants') ? 'pointer' : 'default',
         flex: 1
       }}
     >
-      <DashboardCard 
-        customStyle={{ 
-          flex:1,
+      <DashboardCard
+        customStyle={{
+          flex: 1,
           borderRadius: '10px',
           padding: { xs: '15px', md: '30px' },
           transition: 'all 0.3s ease-in-out',
@@ -287,22 +287,22 @@ const StatCard = ({ card, index, length }: StatCardProps) => {
       >
         <Stack>
           {card.icon}
-          <Typography 
+          <Typography
             className="stat-value"
-            variant="h3" 
-            fontSize={'34px'} 
+            variant="h3"
+            fontSize={'34px'}
             color='rgba(17,17,17,0.92)'
-            marginTop={'20px'} 
-            marginBottom={'10px'} 
+            marginTop={'20px'}
+            marginBottom={'10px'}
             fontWeight="700"
             sx={{ transition: 'color 0.3s ease-in-out' }}
           >
             {card.value?.toLocaleString()}
           </Typography>
-          <Typography 
+          <Typography
             className="stat-title"
-            variant="subtitle2" 
-            fontSize="16px" 
+            variant="subtitle2"
+            fontSize="16px"
             color="rgba(17,17,17,0.62)"
             sx={{ transition: 'color 0.3s ease-in-out' }}
           >
@@ -427,10 +427,10 @@ const Dashboard = () => {
 
   // Add an effect to check if all data is loaded
   useEffect(() => {
-    const allDataLoaded = !calendlyLoading && 
-                         !notificationsLoading && 
-                         !isTabLoading && 
-                         !emailTemplatesLoading;
+    const allDataLoaded = !calendlyLoading &&
+      !notificationsLoading &&
+      !isTabLoading &&
+      !emailTemplatesLoading;
     if (allDataLoaded) {
       setIsAllDataLoaded(true);
       setShowSkeleton(false);
@@ -465,7 +465,7 @@ const Dashboard = () => {
 
     fetchJobPostings();
   }, [statusFilter]);
-  
+
   useEffect(() => {
     const fetchStatistics = async () => {
       try {
@@ -625,6 +625,7 @@ const Dashboard = () => {
         const data = await res.json();
         setAssessments(data.assessments);
       } catch (err: any) {
+        console.error(err)
       } finally {
         setLoading(false);
       }
@@ -853,29 +854,28 @@ const Dashboard = () => {
                 }
               }}
             >
-              Create Job Posting    
+              Create Job Posting
             </Button>
           </Box>
         </Box>
       </Paper>
 
       <Box>
-        <Grid spacing={3} sx={{ width: '100%', }}>
+        <Grid container>
           <Grid container xs={12} spacing={3} padding={0} sx={{ margin: 0, marginBottom: 3, alignItems: 'stretch' }}>
             <Grid item xs={8} sx={{
               margin: 0,
-            overflowX: 'scroll',
+              overflowX: 'scroll',
               height: '300px',
-            '&::-webkit-scrollbar': {
-              display: 'none'
-            },
+              '&::-webkit-scrollbar': {
+                display: 'none'
+              },
               flexDirection: 'column',
-            msOverflowStyle: 'none',
+              msOverflowStyle: 'none',
               scrollbarWidth: 'none',
               backgroundColor: 'white',
               borderRadius: '10px',
               padding: '20px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
             }}>
               <Typography
                 variant="h5"
@@ -897,10 +897,10 @@ const Dashboard = () => {
                   }
                   return <StatCard key={index} card={card} index={index} length={statistics.length} />
                 })}
-            </Stack>
-          </Grid>
+              </Stack>
+            </Grid>
             <Grid item xs={4} paddingTop={0} sx={{ paddingTop: "0 !important" }}>
-              <Notifications 
+              <Notifications
                 notifications={notifications.slice(0, 20)}
                 loading={notificationsLoading}
                 error={notificationsError}
@@ -908,19 +908,31 @@ const Dashboard = () => {
               />
             </Grid>
           </Grid>
-          <Grid container item xs={12} spacing={3} justifyContent={'space-between'} height={'612px'}>
-            <Grid item xs={12} lg={8} maxHeight={'100%'} sx={{ height: '612px', overflow: 'hidden' }}>
-                <JobPostings 
-                  jobPostings={jobPostings} 
-                  statusFilter={statusFilter} 
-                  setStatusFilter={setStatusFilter}
+          <Grid container xs={12} spacing={3} padding={0} sx={{ margin: 0, marginBottom: 3, alignItems: 'stretch' }}>
+            <Grid item xs={8} sx={{
+              margin: 0,
+              overflowX: 'scroll',
+              height: '612px',
+              '&::-webkit-scrollbar': {
+                display: 'none'
+              },
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
+              backgroundColor: 'white',
+              borderRadius: '10px',
+              padding: '0px !important',
+            }}>
+              <JobPostings
+                jobPostings={jobPostings}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
                 isLoading={false}
                 handleOpen={handleOpen}
-                // isSubmitting={isSubmitting}
-                />
+              />
             </Grid>
-            <Grid container item spacing={2.5} xs={12} lg={4} height={'612px'} direction={{ xs: 'column', md: 'row' }}>
-              <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
+
+            <Grid container item xs={4} spacing={3} height={'612px'} width={'100%'}>
+              <Grid item xs={12} paddingTop={0} sx={{ paddingTop: "0 !important" }}>
                 <Assessment
                   customStyle={{ height: '100%' }}
                   assessments={assessments.slice(0, 5)}
@@ -929,7 +941,7 @@ const Dashboard = () => {
                 />
               </Grid>
               <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
-                <EmailTemplates 
+                <EmailTemplates
                   customStyle={{ height: '100%' }}
                   templates={emailTemplates}
                   loading={false}
@@ -938,6 +950,7 @@ const Dashboard = () => {
               </Grid>
             </Grid>
           </Grid>
+
         </Grid>
       </Box>
       <StyledDialog open={open} onClose={handleClose}>

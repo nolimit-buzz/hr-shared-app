@@ -5,14 +5,14 @@ import { Language } from "@mui/icons-material";
 
 interface OnboardingStep1Props {
   data: {
-    company_website: string;
+    website: string;
   };
-  onUpdate: (data: { company_website: string }) => void;
+  onUpdate: (data: { website: string }) => void;
 }
 
 const OnboardingStep1: React.FC<OnboardingStep1Props> = ({ data, onUpdate }) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ company_website: event.target.value });
+    onUpdate({ website: event.target.value });
   };
 
   return (
@@ -25,7 +25,7 @@ const OnboardingStep1: React.FC<OnboardingStep1Props> = ({ data, onUpdate }) => 
         fullWidth
         label="Company Website"
         placeholder="https://yourcompany.com"
-        value={data.company_website}
+        value={data.website}
         onChange={handleChange}
         InputProps={{
           startAdornment: (

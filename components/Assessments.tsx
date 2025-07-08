@@ -86,7 +86,7 @@ const Assessment: React.FC<AssessmentProps> = ({ customStyle, assessments = [], 
         </Box>
       
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 3 }}>
           <CircularProgress size={24} />
         </Box>
       ) : error ? (

@@ -1,26 +1,14 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, Grid, Card, Stack, TextField, InputAdornment, Container, Divider } from '@mui/material';
+import { Box, Typography, Button, Grid, Card, Stack, TextField, InputAdornment, Container, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Menu, MenuItem, IconButton, Snackbar, Alert } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useTheme } from '@mui/material/styles';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
-import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import Chip from '@mui/material/Chip';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
 import { useRouter } from 'next/navigation';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 import Skeleton from '@mui/material/Skeleton';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogActions from '@mui/material/DialogActions';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 const ELEVATE_BASE_URL = 'https://app.elevatehr.ai/';
 
@@ -53,6 +41,21 @@ export default function AssessmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectTypeOpen, setSelectTypeOpen] = useState(false);
   const [selectedType, setSelectedType] = useState('technical_assessment');
+  
+  // Menu and delete state
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [assessmentToDelete, setAssessmentToDelete] = useState<Assessment | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Header menu state
+  const [headerMenuAnchorEl, setHeaderMenuAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   const formatType = (type: string) => {
     return type
@@ -71,6 +74,89 @@ export default function AssessmentsPage() {
 
   const handleDeleteSkill = (skillToDelete: string) => {
     setSkills((skills) => skills.filter((skill) => skill !== skillToDelete));
+  };
+
+  // Handle menu open for assessment cards
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, assessment: Assessment) => {
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedAssessment(assessment);
+  };
+
+  // Handle menu close for assessment cards
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedAssessment(null);
+  };
+
+  // Handle delete from menu
+  const handleDeleteFromMenu = () => {
+    if (selectedAssessment) {
+      setAssessmentToDelete(selectedAssessment);
+      setDeleteDialogOpen(true);
+    }
+    handleMenuClose();
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!assessmentToDelete) return;
+    
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('jwt');
+      if (!token) throw new Error('Authentication token not found');
+      
+      const response = await fetch(`${ELEVATE_BASE_URL}wp-json/elevatehr/v1/quiz-assessments?assessment_id=${assessmentToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete assessment');
+      }
+      
+      // Remove the assessment from the local state
+      setAssessments(prev => prev.filter(a => a.id !== assessmentToDelete.id));
+      setDeleteDialogOpen(false);
+      setAssessmentToDelete(null);
+      
+      // Show success message
+      setSnackbarMessage('Assessment deleted successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (err: any) {
+      console.error('Error deleting assessment:', err);
+      // Show error message
+      setSnackbarMessage('Failed to delete assessment. Please try again.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Handle delete cancellation
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setAssessmentToDelete(null);
+  };
+
+  // Handle header menu open
+  const handleHeaderMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setHeaderMenuAnchorEl(event.currentTarget);
+  };
+
+  // Handle header menu close
+  const handleHeaderMenuClose = () => {
+    setHeaderMenuAnchorEl(null);
+  };
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   useEffect(() => {
@@ -211,8 +297,27 @@ export default function AssessmentsPage() {
                   flexDirection: 'column',
                   gap: 0.5,
                   transition: 'box-shadow 0.2s',
+                  position: 'relative',
                 }}
               >
+                {/* Menu Icon - Already Added */}
+                <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 1 }}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleMenuOpen(e, a)}
+                    sx={{
+                      color: 'rgba(17, 17, 17, 0.48)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(17, 17, 17, 0.08)',
+                        color: 'rgba(17, 17, 17, 0.68)',
+                      },
+                    }}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Box>
+
+                {/* Card Content */}
                 <Box sx={{ p: 3 }}>
                 <Box
                   sx={{
@@ -411,6 +516,225 @@ export default function AssessmentsPage() {
           </Box>
         </DialogContent>
       </Dialog>
+
+      {/* Assessment Card Menu Dropdown */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            minWidth: 160,
+            mt: 1,
+          }
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem 
+          onClick={handleDeleteFromMenu}
+          sx={{
+            color: '#DC3545',
+            fontSize: '14px',
+            fontWeight: 500,
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              backgroundColor: 'rgba(220, 53, 69, 0.08)',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 6.73001C20.98 6.73001 20.95 6.73001 20.92 6.73001C15.63 6.20001 10.35 6.00001 5.12 6.53001L3.08 6.73001C2.66 6.77001 2.29 6.47001 2.25 6.05001C2.21 5.63001 2.51 5.27001 2.92 5.23001L4.96 5.03001C10.28 4.49001 15.67 4.70001 21.07 5.23001C21.48 5.27001 21.78 5.64001 21.74 6.05001C21.71 6.44001 21.38 6.73001 21 6.73001Z" fill="#DC3545"/>
+              <path d="M8.5 5.72C8.46 5.72 8.42 5.72 8.37 5.71C7.97 5.64 7.69 5.25 7.76 4.85L7.98 3.54C8.14 2.58 8.36 1.25 10.69 1.25H13.31C15.65 1.25 15.87 2.63 16.02 3.55L16.24 4.85C16.31 5.26 16.03 5.65 15.63 5.71C15.22 5.78 14.83 5.5 14.77 5.1L14.55 3.8C14.41 2.93 14.38 2.76 13.32 2.76H10.7C9.64 2.76 9.62 2.9 9.47 3.79L9.24 5.09C9.18 5.46 8.86 5.72 8.5 5.72Z" fill="#DC3545"/>
+              <path d="M15.21 22.75H8.79C5.3 22.75 5.16 20.82 5.05 19.26L4.4 9.19C4.37 8.78 4.69 8.42 5.1 8.39C5.52 8.37 5.87 8.68 5.9 9.09L6.55 19.16C6.66 20.68 6.7 21.25 8.79 21.25H15.21C17.31 21.25 17.35 20.68 17.45 19.16L18.1 9.09C18.13 8.68 18.49 8.37 18.9 8.39C19.31 8.42 19.63 8.77 19.6 9.19L18.95 19.26C18.84 20.82 18.7 22.75 15.21 22.75Z" fill="#DC3545"/>
+              <path d="M13.66 17.25H10.33C9.92 17.25 9.58 16.91 9.58 16.5C9.58 16.09 9.92 15.75 10.33 15.75H13.66C14.07 15.75 14.41 16.09 14.41 16.5C14.41 16.91 14.07 17.25 13.66 17.25Z" fill="#DC3545"/>
+              <path d="M14.5 13.25H9.5C9.09 13.25 8.75 12.91 8.75 12.5C8.75 12.09 9.09 11.75 9.5 11.75H14.5C14.91 11.75 15.25 12.09 15.25 12.5C15.25 12.91 14.91 13.25 14.5 13.25Z" fill="#DC3545"/>
+            </svg>
+          </Box>
+          Delete
+        </MenuItem>
+      </Menu>
+
+      {/* Header Menu Dropdown */}
+      <Menu
+        anchorEl={headerMenuAnchorEl}
+        open={Boolean(headerMenuAnchorEl)}
+        onClose={handleHeaderMenuClose}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            minWidth: 180,
+            mt: 1,
+          }
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem 
+          onClick={() => {
+            // Add your header menu action here
+            handleHeaderMenuClose();
+          }}
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              backgroundColor: 'rgba(68, 68, 226, 0.08)',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H19C20.11 23 21 22.11 21 21V9ZM19 9H14V4H5V21H19V9Z" fill="#292D32"/>
+            </svg>
+          </Box>
+          Export Data
+        </MenuItem>
+        <MenuItem 
+          onClick={() => {
+            // Add your header menu action here
+            handleHeaderMenuClose();
+          }}
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              backgroundColor: 'rgba(68, 68, 226, 0.08)',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19Z" fill="#292D32"/>
+              <path d="M7 12H9V17H7V12Z" fill="#292D32"/>
+              <path d="M11 7H13V17H11V7Z" fill="#292D32"/>
+              <path d="M15 10H17V17H15V10Z" fill="#292D32"/>
+            </svg>
+          </Box>
+          View Analytics
+        </MenuItem>
+        <MenuItem 
+          onClick={() => {
+            // Add your header menu action here
+            handleHeaderMenuClose();
+          }}
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              backgroundColor: 'rgba(68, 68, 226, 0.08)',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="#292D32"/>
+            </svg>
+          </Box>
+          Help & Support
+        </MenuItem>
+      </Menu>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog 
+        open={deleteDialogOpen} 
+        onClose={handleDeleteCancel}
+        maxWidth="xs" 
+        PaperProps={{ sx: { borderRadius: '20px', p: 0, bgcolor: '#fff' } }}
+      >
+        <DialogContent sx={{ p: { xs: 3, md: 4 }, position: 'relative', bgcolor: '#fff', minWidth: { xs: 320, md: 400 } }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 20, color: 'rgba(17, 17, 17, 0.92)', mb: 2, textAlign: 'left' }}>
+            Delete Assessment
+          </Typography>
+          <Typography sx={{ fontSize: 16, color: 'rgba(17, 17, 17, 0.68)', mb: 3, textAlign: 'left' }}>
+            Are you sure you want to delete "{assessmentToDelete?.title}"? This action cannot be undone.
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleDeleteCancel}
+              // color="secondary.main"
+              sx={{ 
+                bgcolor: 'primary.main',
+                fontWeight: 500, 
+                fontSize: 16, 
+                borderRadius: '8px', 
+                px: 3, 
+                py: 1,
+                '&:hover': {
+                  bgcolor: 'primary.main',
+                  opacity:0.95
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              sx={{ 
+                fontWeight: 600, 
+                fontSize: 16, 
+                borderRadius: '8px', 
+                px: 3, 
+                py: 1, 
+                borderColor: '#DC3545',
+                color: '#DC3545',
+                '&:hover': { 
+                  borderColor: '#C82333',
+                  color: '#C82333',
+                  backgroundColor: 'rgba(220, 53, 69, 0.04)'
+                },
+                '&:disabled': { 
+                  borderColor: '#DC3545', 
+                  color: '#DC3545',
+                  opacity: 0.6 
+                }
+              }}
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbarSeverity}
+          sx={{ 
+            width: '100%',
+            borderRadius: '8px',
+            '& .MuiAlert-icon': {
+              fontSize: '20px',
+            },
+            '& .MuiAlert-message': {
+              fontSize: '14px',
+              fontWeight: 500,
+            }
+          }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 } 

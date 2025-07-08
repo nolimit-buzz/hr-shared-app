@@ -1,3 +1,4 @@
+'use client'
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -75,11 +76,8 @@ const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [companyLogo, setCompanyLogo] = useState("/images/logos/logo.svg");
   const [userName, setUserName] = useState("User");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    if (typeof window !== 'undefined') {
       try {
         const userProfileStr = localStorage.getItem('userProfile');
         if (userProfileStr) {
@@ -93,13 +91,11 @@ const Header = () => {
           }
         }
       } catch (error) {
-        // fallback to defaults
+        console.log(error);
       }
-    }
   }, []);
 
-  if (!mounted) return null;
-
+  console.log(companyLogo);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -197,6 +193,8 @@ const Header = () => {
       }
     }
   }));
+
+
 
   const links = [
     { href: "/dashboard", title: "Dashboard", icon: <DashboardRoundedIcon /> },

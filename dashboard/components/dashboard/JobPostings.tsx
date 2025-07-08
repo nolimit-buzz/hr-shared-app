@@ -20,10 +20,8 @@ import {
   Snackbar,
 } from "@mui/material";
 import DashboardCard from "@/app/dashboard/components/shared/DashboardCard";
-import zIndex from '@mui/material/styles/zIndex';
-import { useRouter } from 'next/navigation';
 import FilterListIcon from '@mui/icons-material/FilterList';
-
+import { useRouter } from 'next/navigation';
 interface JobPosting {
   id: string;
   title: string;
@@ -36,7 +34,7 @@ interface JobPosting {
     skill_assessment: number;
     interviews: number;
     acceptance: number;
-    rejection: number;
+    archived: number;
   };
   status: string;
 }
@@ -373,6 +371,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
 
   return (
     <DashboardCard customStyle={{ padding: '0px', ...customStyle }}>
+      <>
       <Box>
         <Box sx={{
           display: 'flex',
@@ -579,6 +578,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
           Job opening link has been copied to clipboard
         </Alert>
       </Snackbar>
+      </>
     </DashboardCard>
   );
 };

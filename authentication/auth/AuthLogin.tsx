@@ -19,13 +19,13 @@ const AuthLogin: React.FC<AuthLoginProps> = ({ title, subtitle, subtext }) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Check if user is already logged in
-  // useEffect(() => {
-  //   const token = localStorage.getItem("jwt");
-  //   if (token) {
-  //     router.push("/dashboard"); // Redirect to dashboard if JWT exists
-  //   }
-  // }, [router]);
+  // Check if user is already logged in and redirect to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("jwt");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,9 +76,9 @@ const AuthLogin: React.FC<AuthLoginProps> = ({ title, subtitle, subtext }) => {
       const token = response.data.token;
       localStorage.setItem("jwt", token); // Save JWT in localStorage
       localStorage.setItem('userProfile', JSON.stringify({
-        userId: response.data.user_id,
         personalInfo: response.data.personal_info,
-        companyInfo: response.data.company_info
+        companyInfo: response.data.company_info,
+        notifications: response.data.notifications
       }));
 
       console.log("Login successful:", response.data);
