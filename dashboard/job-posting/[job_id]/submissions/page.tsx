@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { handleApiError } from '@/utils/errorHandler';
 import {
   Box,
   Container,
@@ -15,7 +16,17 @@ import {
   Stack,
   Pagination,
   Skeleton,
+  FormControl,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
 } from "@mui/material";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import CandidateListSection from "@/app/dashboard/components/dashboard/CandidatesListSection";
@@ -123,7 +134,7 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [perPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
   const [companyId, setCompanyId] = useState<string | null>(null);
 
   // Simplified getJobId function
@@ -152,9 +163,7 @@ export default function Home() {
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch job details: ${response.status}`);
-        }
+        handleApiError(response);
 
         const data = await response.json();
         console.log("Job details received:", data);
@@ -186,9 +195,12 @@ export default function Home() {
     try {
       const token = localStorage.getItem("jwt");
       const jobId = params["job_id"] as string;
-      const stage = subTabValue === 0 ? "new" : getStageValue(subTabValue);
       const url = new URL(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${jobId}/applications`);
-      url.searchParams.append('stage', stage);
+      // For "All" tab (index 0), do not include stage filter
+      if (subTabValue !== 0) {
+        const stage = getStageValue(subTabValue);
+        url.searchParams.append('stage', stage);
+      }
       url.searchParams.append('page', page.toString());
       url.searchParams.append('per_page', perPage.toString());
 
@@ -196,7 +208,7 @@ export default function Home() {
       console.log('Selected Assessment Type:', selectedAssessmentType);
       console.log('Assessments:', assessments);
 
-      if (stage === 'skill_assessment' && selectedAssessmentType > 0) {
+      if (subTabValue !== 0 && getStageValue(subTabValue) === 'skill_assessment' && selectedAssessmentType > 0) {
         // Subtract 1 because index 0 is "All" tab
         const assessmentType = assessments[selectedAssessmentType - 1]?.type;
         console.log('Assessment Type to be added:', assessmentType);
@@ -214,9 +226,7 @@ export default function Home() {
         cache: "no-store",
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch candidates: ${response.status}`);
-      }
+              handleApiError(response);
 
       const data = await response.json();
       setCandidates(data);
@@ -277,12 +287,14 @@ export default function Home() {
   const getStageValue = (tabValue: number): StageType => {
     switch (tabValue) {
       case 1:
-        return "skill_assessment";
+        return "new";
       case 2:
-        return "interviews";
+        return "skill_assessment";
       case 3:
-        return "acceptance";
+        return "interviews";
       case 4:
+        return "acceptance";
+      case 5:
         return "archived";
       default:
         return "new";
@@ -346,11 +358,7 @@ export default function Home() {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch filtered candidates: ${response.status}`
-        );
-      }
+      handleApiError(response);
 
       const data = await response.json();
       setFilteredCandidates(data);
@@ -489,9 +497,7 @@ export default function Home() {
           }
         );
 
-        if (!response.ok) {
-          throw new Error('Failed to send assessment');
-        }
+        handleApiError(response);
 
         handleNotification('Assessment sent successfully', 'success');
       } else {
@@ -511,9 +517,7 @@ export default function Home() {
           }
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to update stage");
-        }
+        handleApiError(response);
 
         handleNotification(
           `Successfully moved ${entries.length} candidate${entries.length > 1 ? "s" : ""
@@ -570,6 +574,118 @@ export default function Home() {
     }
   };
 
+  // Bulk email editor (client-only) with stable reference
+  const ReactQuill = React.useMemo(() => dynamic(() => import("react-quill"), { ssr: false }), []);
+  const quillModules = React.useMemo(() => ({
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link'],
+      ['clean']
+    ],
+  }), []);
+  const quillFormats = React.useMemo(() => (
+    [
+      'header',
+      'bold', 'italic', 'underline', 'strike',
+      'list', 'bullet',
+      'link'
+    ]
+  ), []);
+
+  // Bulk email modal state
+  const [bulkEmailOpen, setBulkEmailOpen] = useState(false);
+  const [bulkEmailLoading, setBulkEmailLoading] = useState(false);
+  const [bulkEmailContent, setBulkEmailContent] = useState("");
+  const [bulkEmailError, setBulkEmailError] = useState("");
+  const [bulkPendingAction, setBulkPendingAction] = useState<string | null>(null);
+
+  const mapActionToTemplateKey = (action: string): string | null => {
+    switch (action) {
+      case "interviews":
+        return "interview_booking";
+      case "acceptance":
+        return "acceptance";
+      case "archived":
+        return "archived";
+      default:
+        return null;
+    }
+  };
+
+  const openBulkEmailModalForAction = async (action: string) => {
+    try {
+      setBulkPendingAction(action);
+      setBulkEmailLoading(true);
+      setBulkEmailError("");
+      setBulkEmailContent("");
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("Authentication token not found");
+      const response = await fetch(
+        "https://app.elevatehr.ai/wp-json/elevatehr/v1/email-templates",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch email templates");
+      }
+      const data = await response.json();
+      const key = mapActionToTemplateKey(action);
+      const content = key && data?.templates?.[key]?.content ? data.templates[key].content : "";
+      setBulkEmailContent(content);
+      setBulkEmailOpen(true);
+    } catch (err) {
+      setBulkEmailError(err instanceof Error ? err.message : "Failed to load templates");
+      setNotification({ open: true, message: bulkEmailError || "Failed to load templates", severity: "error" });
+    } finally {
+      setBulkEmailLoading(false);
+    }
+  };
+
+  const handleSendBulkEmailAndMoveStage = async () => {
+    if (!bulkPendingAction || !selectedEntries || selectedEntries.length === 0) return;
+    try {
+      setBulkEmailLoading(true);
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("Authentication token not found");
+      const response = await fetch(
+        "https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/move-stage",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            entries: selectedEntries,
+            stage: bulkPendingAction,
+            custom_email_template: bulkEmailContent,
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Failed to update stage with email");
+      }
+      setNotification({ open: true, message: `Email sent and ${selectedEntries.length} candidate(s) moved to '${bulkPendingAction.replace("_", " ")}'`, severity: "success" });
+      setBulkEmailOpen(false);
+      setBulkPendingAction(null);
+      setSelectedEntries([]);
+      // Refresh list
+      fetchCandidates();
+    } catch (err) {
+      setNotification({ open: true, message: err instanceof Error ? err.message : "Failed to send email", severity: "error" });
+    } finally {
+      setBulkEmailLoading(false);
+    }
+  };
+
   const handleCloseResponses = async () => {
     try {
       const token = localStorage.getItem("jwt");
@@ -593,9 +709,7 @@ export default function Home() {
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to update job status");
-      }
+      handleApiError(response);
 
       // Show success notification
       setNotification({
@@ -620,9 +734,7 @@ export default function Home() {
           }
         );
 
-        if (!jobDetailsResponse.ok) {
-          throw new Error("Failed to fetch updated job details");
-        }
+        handleApiError(jobDetailsResponse);
 
         const jobDetailsData = await jobDetailsResponse.json();
         setJobDetails(jobDetailsData);
@@ -642,9 +754,7 @@ export default function Home() {
           }
         );
 
-        if (!candidatesResponse.ok) {
-          throw new Error("Failed to fetch updated candidates");
-        }
+        handleApiError(candidatesResponse);
 
         const candidatesData = await candidatesResponse.json();
         setCandidates(candidatesData);
@@ -862,7 +972,7 @@ export default function Home() {
               <ArrowBackIcon />
             </IconButton>
             <Typography
-            className="job-title"
+              className="job-title"
               variant="h5"
               sx={{
                 fontSize: { xs: "18px", sm: "24px" },
@@ -883,7 +993,7 @@ export default function Home() {
                     style={{ display: "inline-flex", alignItems: "center", marginLeft: 8 }}
                     title="View public job posting"
                   >
-                    <svg style={{ transform: 'rotate(45deg)' }}  width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg style={{ transform: 'rotate(45deg)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M18.0701 10.32C17.8801 10.32 17.6901 10.25 17.5401 10.1L12.0001 4.56L6.46012 10.1C6.17012 10.39 5.69012 10.39 5.40012 10.1C5.11012 9.81 5.11012 9.33 5.40012 9.04L11.4701 2.97C11.7601 2.68 12.2401 2.68 12.5301 2.97L18.6001 9.04C18.8901 9.33 18.8901 9.81 18.6001 10.1C18.4601 10.25 18.2601 10.32 18.0701 10.32Z" fill="#292D32" />
                       <path d="M12 21.25C11.59 21.25 11.25 20.91 11.25 20.5V3.67C11.25 3.26 11.59 2.92 12 2.92C12.41 2.92 12.75 3.26 12.75 3.67V20.5C12.75 20.91 12.41 21.25 12 21.25Z" fill="#292D32" />
                     </svg>
@@ -993,7 +1103,7 @@ export default function Home() {
                 sx={{
                   borderBottom: 1,
                   borderColor: "divider",
-                  mb: 3,
+                  // mb: 3,
                   backgroundColor: "#ffffff !important",
                   borderRadius: "10px",
                   paddingX: "20px",
@@ -1029,6 +1139,37 @@ export default function Home() {
                         <Box
                           sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
+                          <span>All</span>
+                          <Chip
+                            label={stageTotals.new + stageTotals.skill_assessment + stageTotals.interviews + stageTotals.acceptance + stageTotals.archived}
+                            size="small"
+                            sx={{
+                              bgcolor: theme.palette.secondary.main,
+                              color: "white",
+                              height: "20px",
+                              "& .MuiChip-label": {
+                                px: 1,
+                                fontSize: "12px",
+                                fontWeight: 500,
+                              },
+                            }}
+                          />
+                        </Box>
+                      }
+                      sx={{
+                        textTransform: "none",
+                        color:
+                          subTabValue === 0
+                            ? theme.palette.grey[100]
+                            : theme.palette.grey[200],
+                        flex: 1,
+                      }}
+                    />
+                    <Tab
+                      label={
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <span>Application Review</span>
                           <Chip
                             label={stageTotals.new}
@@ -1049,7 +1190,7 @@ export default function Home() {
                       sx={{
                         textTransform: "none",
                         color:
-                          subTabValue === 0
+                          subTabValue === 1
                             ? theme.palette.grey[100]
                             : theme.palette.grey[200],
                         flex: 1,
@@ -1080,7 +1221,7 @@ export default function Home() {
                       sx={{
                         textTransform: "none",
                         color:
-                          subTabValue === 1
+                          subTabValue === 2
                             ? theme.palette.grey[100]
                             : theme.palette.grey[200],
                         flex: 1,
@@ -1111,7 +1252,7 @@ export default function Home() {
                       sx={{
                         textTransform: "none",
                         color:
-                          subTabValue === 2
+                          subTabValue === 3
                             ? theme.palette.grey[100]
                             : theme.palette.grey[200],
                         flex: 1,
@@ -1142,7 +1283,7 @@ export default function Home() {
                       sx={{
                         textTransform: "none",
                         color:
-                          subTabValue === 3
+                          subTabValue === 4
                             ? theme.palette.grey[100]
                             : theme.palette.grey[200],
                         flex: 1,
@@ -1173,7 +1314,7 @@ export default function Home() {
                       sx={{
                         textTransform: "none",
                         color:
-                          subTabValue === 4
+                          subTabValue === 5
                             ? theme.palette.grey[100]
                             : theme.palette.grey[200],
                         flex: 1,
@@ -1193,46 +1334,103 @@ export default function Home() {
               <Paper
                 elevation={0}
                 sx={{
+                  display: "flex",
+                  flexDirection: "column",
                   bgcolor: "transparent",
                   borderRadius: 2,
                   position: "relative",
-                  minHeight: "700px",
-                  overflow: "hidden"
+                  height: `calc(100vh - 273px)`,
+                  overflow: "hidden",
                 }}
               >
                 {/* Actions bar inside Paper, before candidates list */}
-                {selectedEntries?.length > 0 &&
-                  subTabValue !== 3 && ( // Hide for acceptance phase
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    py: 2,
+                    borderBottom: {
+                      xs: "none",
+                      lg: "1px solid rgba(0, 0, 0, 0.12)",
+                    },
+                  }}
+                >
+                  {/* Select All control */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        p: 2,
-                        borderBottom: {
-                          xs: "none",
-                          lg: "1px solid rgba(0, 0, 0, 0.12)",
-                        },
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                        // py: 0.5,
+
                       }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Typography
-                          variant="body1"
-                          color={theme.palette.grey[100]}
-                        >
-                          {selectedEntries?.length} candidates selected
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => setSelectedEntries([])}
-                          sx={{ ml: 1 }}
-                        >
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
+                      {(() => {
+                        const allVisibleIds = filteredCandidates?.applications?.map((c) => c.id) || [];
+                        const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedEntries?.includes(id));
+                        return (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                              if (allSelected) {
+                                setSelectedEntries([]);
+                              } else {
+                                setSelectedEntries(allVisibleIds);
+                              }
+                            }}
+                            sx={{
+                              width: "max-content",
+                              flexWrap: "nowrap",
+                              py: 1,
+                              px: 1.5,
+                              color: 'rgba(17, 17, 17, 0.84)',
+                              borderColor: 'rgba(17, 17, 17, 0.12)',
+                              '&:hover': {
+                                borderColor: 'rgba(17, 17, 17, 0.24)',
+                              },
+                            }}
+                          >
+                            {allSelected ? 'Clear selection' : 'Select all candidates'}
+                          </Button>
+                        );
+                      })()}
+                    </Box>
+                    {selectedEntries?.length > 0 &&
+                      subTabValue !== 3 && ( // Hide for acceptance phase
+                        <>
 
+                          <Box
+                            sx={{
+                              width: "max-content",
+                              flexWrap: "nowrap", display: "flex", alignItems: "center", gap: 1, backgroundColor: "#ffffff", borderRadius: "1000px", px: 1.5, py: 0.5, border: "1px solid rgba(0, 0, 0, 0.12)"
+                            }}
+                          >
+                            <Typography
+                              variant="body1"
+                              color={theme.palette.grey[100]}
+                            >
+                              {selectedEntries?.length} candidates selected
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={() => setSelectedEntries([])}
+                              sx={{ ml: 1 }}
+                            >
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+
+
+                        </>
+                      )}
+                  </Box>
+                  {selectedEntries?.length > 0 &&
+                    subTabValue !== 3 && (
                       <Box sx={{ display: "flex", gap: 2 }}>
                         {(() => {
                           console.log('Current stage:', getStageValue(subTabValue));
@@ -1253,14 +1451,18 @@ export default function Home() {
                                     <option.icon />
                                   )
                                 }
-                                onClick={() => {
-                                  console.log('Option clicked:', option);
-                                  handleUpdateStages({
-                                    stage: option.action as StageType,
-                                    assessmentType: option.action.startsWith('assessment_')
-                                      ? option.action.replace('assessment_', '')
-                                      : undefined
-                                  });
+                                onClick={async () => {
+                                  const emailStages = ["interviews", "acceptance", "archived"];
+                                  if (emailStages.includes(option.action)) {
+                                    await openBulkEmailModalForAction(option.action);
+                                  } else {
+                                    handleUpdateStages({
+                                      stage: option.action as StageType,
+                                      assessmentType: option.action.startsWith('assessment_')
+                                        ? option.action.replace('assessment_', '')
+                                        : undefined
+                                    });
+                                  }
                                 }}
                                 disabled={isMovingStage.length > 0}
                                 sx={{
@@ -1281,8 +1483,9 @@ export default function Home() {
                           }
                         )}
                       </Box>
-                    </Box>
-                  )}
+                    )}
+                  {/* Rows-per-page moved below, just before candidates listing */}
+                </Box>
 
                 {/* Assessment Tabs */}
                 {subTabValue === 1 && (
@@ -1343,8 +1546,10 @@ export default function Home() {
                   />
                 ) : (
                   <>
+
                     {/* Desktop View */}
                     <Box
+                      className="thin-scrollbar"
                       sx={{
                         height: "max-content",
                         overflow: "auto",
@@ -1405,7 +1610,103 @@ export default function Home() {
                     />
                   </>
                 )}
+                {/* Pagination controls */}
+                {primaryTabValue === 0 && totalPages > 0 && (
+
+                  <Box sx={{ mx: 'auto', display: 'flex', alignItems: 'start', justifyContent: 'space-between', mt: 3, mb: 0 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <Pagination
+                        count={totalPages}
+                        page={page}
+                        onChange={handlePageChange}
+                        color="primary"
+                        size="large"
+                        showFirstButton
+                        showLastButton
+                        sx={{
+                          '& .MuiPaginationItem-root': {
+                            fontSize: '16px',
+                            fontWeight: 500,
+                          },
+                          '& .Mui-selected': {
+                            backgroundColor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                              backgroundColor: 'primary.dark',
+                            },
+                          },
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="grey.200"
+                        align="center"
+                        sx={{ mb: 3 }}
+                      >
+                        Showing <span style={{ fontWeight: 600 }}>{((page - 1) * perPage) + 1}</span> to <span style={{ fontWeight: 600 }}>{Math.min(page * perPage, totalItems)}</span> of <span style={{ fontWeight: 600 }}>{totalItems}</span> entries
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" color="grey.200">Show per Page:</Typography>
+                      <FormControl size="small" sx={{ minWidth: 72, borderRadius: '1000px' }}>
+                        <Select
+                          value={perPage}
+                          onChange={(e) => {
+                            const next = Number(e.target.value);
+                            setPerPage(next);
+                            setPage(1);
+                          }}
+                        >
+                          <MenuItem value={5}>5</MenuItem>
+                          <MenuItem value={10}>10</MenuItem>
+                          <MenuItem value={20}>20</MenuItem>
+                          <MenuItem value={30}>30</MenuItem>
+                          <MenuItem value={50}>50</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  </Box>
+                )}
               </Paper>
+              {/* Bulk Email Modal */}
+              <Dialog
+                open={bulkEmailOpen}
+                onClose={() => setBulkEmailOpen(false)}
+                fullWidth
+                maxWidth="md"
+              >
+                <DialogTitle sx={{ fontWeight: 600, color: "rgba(17, 17, 17, 0.92)" }}>
+                  {bulkPendingAction ? `Send email for ${bulkPendingAction.replace("_", " ")}` : "Send Email"}
+                </DialogTitle>
+                <DialogContent dividers sx={{ bgcolor: theme.palette.background.paper }}>
+                  {bulkEmailLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <Box sx={{ '.ql-toolbar': { borderRadius: '8px 8px 0 0' }, '.ql-container': { borderRadius: '0 0 8px 8px', minHeight: 220 } }}>
+                      {/* @ts-ignore - ReactQuill loaded dynamically */}
+                      <ReactQuill theme="snow" value={bulkEmailContent} onChange={setBulkEmailContent} modules={quillModules} formats={quillFormats} />
+                    </Box>
+                  )}
+                  {bulkEmailError && (
+                    <Alert severity="error" sx={{ mt: 2 }}>{bulkEmailError}</Alert>
+                  )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                  <Button onClick={() => setBulkEmailOpen(false)} variant="outlined" color="primary">
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSendBulkEmailAndMoveStage}
+                    variant="contained"
+                    color="secondary"
+                    disabled={bulkEmailLoading || !bulkEmailContent}
+                  >
+                    {bulkEmailLoading ? <CircularProgress size={20} color="inherit" /> : 'Send'}
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </Box>
           </Stack>
         ) : (
@@ -1427,43 +1728,7 @@ export default function Home() {
           </Paper>
         )}
 
-        {/* Add pagination controls */}
-        {primaryTabValue === 0 && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                size="large"
-                showFirstButton
-                showLastButton
-                sx={{
-                  '& .MuiPaginationItem-root': {
-                    fontSize: '16px',
-                    fontWeight: 500,
-                  },
-                  '& .Mui-selected': {
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    },
-                  },
-                }}
-              />
-            </Box>
-            <Typography
-              variant="body2"
-              color="grey.200"
-              align="center"
-              sx={{ mb: 3 }}
-            >
-              Showing <span style={{ fontWeight: 600 }}>{((page - 1) * perPage) + 1}</span> to <span style={{ fontWeight: 600 }}>{Math.min(page * perPage, totalItems)}</span> of <span style={{ fontWeight: 600 }}>{totalItems}</span> entries
-            </Typography>
-          </>
-        )}
+
       </Container>
     </Box>
   );

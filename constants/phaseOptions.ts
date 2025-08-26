@@ -6,15 +6,20 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 export const PHASE_OPTIONS = {
   new: [
     { label: 'Move to Assessment', icon: AssessmentIcon, action: 'skill_assessment' },
-    { label: 'Archive', icon: ArchiveIcon , action: 'archived' }
+    { label: 'Schedule Interview', icon: AssessmentIcon, action: 'interviews' },
+    { label: 'Archive', icon: ArchiveIcon , action: 'archived' },
+    { label: 'Accept', icon: CheckCircleOutlineIcon , action: 'acceptance' }
   ],
   skill_assessment: [
     { label: 'Schedule Interview', icon: AssessmentIcon , action: 'interviews' },
-    { label: 'Archive', icon: ArchiveIcon , action: 'archived' }
+    { label: 'Archive', icon: ArchiveIcon , action: 'archived' },
+    { label: 'Accept', icon: CheckCircleOutlineIcon , action: 'acceptance' }
   ],
   archived: [
     { label: 'Move to Assessment', icon: AssessmentIcon, action: 'skill_assessment' },
-    { label: 'Accept', icon: CheckCircleOutlineIcon , action: 'acceptance' }
+    { label: 'Schedule Interview', icon: AssessmentIcon, action: 'interviews' },
+    { label: 'Accept', icon: CheckCircleOutlineIcon , action: 'acceptance' },
+    { label: 'Archive', icon: ArchiveIcon, action: 'archived' }
   ],
   acceptance: [], // No options for acceptance phase
   interviews: [

@@ -40,8 +40,8 @@ interface JobPosting {
 }
 
 interface JobPostingsProps {
-  statusFilter: 'all' | 'active' | 'close';
-  setStatusFilter: (value: 'all' | 'active' | 'close') => void;
+  statusFilter: 'all' | 'active' | 'closed';
+  setStatusFilter: (value: 'all' | 'active' | 'closed') => void;
   jobPostings: JobPosting[];
   customStyle?: React.CSSProperties;
   isLoading?: boolean;
@@ -201,7 +201,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
       setCompanyId(userProfileData.companyInfo.company_id);
     }
   }, []);
-  const handleStatusChange = (_event: React.SyntheticEvent, newValue: 'all' | 'active' | 'close') => {
+  const handleStatusChange = (_event: React.SyntheticEvent, newValue: 'all' | 'active' | 'closed') => {
     setStatusFilter(newValue);
   };
 
@@ -213,7 +213,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
     setAnchorEl(null);
   };
 
-  const handleMenuItemClick = (value: 'all' | 'active' | 'close') => {
+  const handleMenuItemClick = (value: 'all' | 'active' | 'closed') => {
     setStatusFilter(value);
     handleMenuClose();
   };
@@ -450,8 +450,8 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
                 Active
               </MenuItem>
               <MenuItem
-                onClick={() => handleMenuItemClick('close')}
-                selected={statusFilter === 'close'}
+                onClick={() => handleMenuItemClick('closed')}
+                selected={statusFilter === 'closed'}
               >
                 Closed
               </MenuItem>
@@ -462,7 +462,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
             <StyledTabs value={statusFilter} onChange={handleStatusChange} aria-label="job status tabs">
               <StyledTab label="All" value="all" />
               <StyledTab label="Active" value="active" />
-              <StyledTab label="Closed" value="close" />
+              <StyledTab label="Closed" value="closed" />
             </StyledTabs>
           </Box>
         </Box>

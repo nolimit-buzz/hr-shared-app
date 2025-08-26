@@ -21,8 +21,14 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
 import AssessmentIcon from "@mui/icons-material/Assessment";
@@ -231,8 +237,132 @@ export default function CandidateListSection({
             assessmentResult.assessment_status !== 'sent');
   });
 
+  // Quill editor (client-only) - keep stable reference
+  const ReactQuill = useMemo(() => dynamic(() => import("react-quill"), { ssr: false }), []);
+  const quillModules = useMemo(() => ({
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link'],
+      ['clean']
+    ],
+  }), []);
+  const quillFormats = useMemo(() => (
+    [
+      'header',
+      'bold', 'italic', 'underline', 'strike',
+      'list', 'bullet',
+      'link'
+    ]
+  ), []);
+
+  // Email modal state
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailContent, setEmailContent] = useState<string>("");
+  const [emailError, setEmailError] = useState<string>("");
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+
+  const mapActionToTemplateKey = (action: string): string | null => {
+    // Map stage action to template keys from API
+    switch (action) {
+      case "interviews":
+        // For scheduling, prefer interview_booking if available
+        return "interview_booking";
+      case "acceptance":
+        return "acceptance";
+      case "archived":
+        return "archived";
+      default:
+        return null;
+    }
+  };
+
+  const openEmailModalForAction = async (action: string) => {
+    try {
+      setPendingAction(action);
+      setEmailLoading(true);
+      setEmailError("");
+      setEmailContent("");
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+      if (!token) throw new Error("Authentication token not found");
+
+      const response = await fetch(
+        "https://app.elevatehr.ai/wp-json/elevatehr/v1/email-templates",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch email templates");
+      }
+      const data = await response.json();
+      const templateKey = mapActionToTemplateKey(action);
+      const content = templateKey && data?.templates?.[templateKey]?.content
+        ? data.templates[templateKey].content
+        : "";
+      setEmailContent(content);
+      setEmailModalOpen(true);
+    } catch (error) {
+      setEmailError(error instanceof Error ? error.message : "Failed to load templates");
+      onNotification?.(emailError || "Failed to load templates", "error");
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleSendEmailAndMoveStage = async () => {
+    if (!pendingAction) return;
+    try {
+      setEmailLoading(true);
+      const token = typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
+      if (!token) throw new Error("Authentication token not found");
+
+      const response = await fetch(
+        "https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/move-stage",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            entries: [candidate.id],
+            stage: pendingAction,
+            custom_email: emailContent,
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Failed to update stage with email");
+      }
+
+      onNotification?.(
+        `Email sent and applicant moved to '${pendingAction.replace("_", " ")}'`,
+        "success"
+      );
+      setEmailModalOpen(false);
+      setPendingAction(null);
+    } catch (error) {
+      onNotification?.(
+        error instanceof Error ? error.message : "Failed to send email",
+        "error"
+      );
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   return (
     <Paper
+      
       elevation={0}
       sx={{
         display: "flex",
@@ -404,6 +534,7 @@ export default function CandidateListSection({
             gap: 3.5,
             mt: 1,
             ml: "12px",
+            
           }}
         >
           {/* Map through candidate info */}
@@ -531,10 +662,19 @@ export default function CandidateListSection({
           {/* Phase-specific options */}
           {filteredOptions.map((option: CandidatePhaseOption) => {
             const IconComponent = option.icon;
+            const isEmailStage = ["interviews", "acceptance", "archived"].includes(option.action);
             return (
               <MenuItem
                 key={option.action}
-                onClick={(e) => handleAction(e, option.action)}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  handleClose();
+                  if (isEmailStage) {
+                    await openEmailModalForAction(option.action);
+                  } else {
+                    await handleAction(e, option.action);
+                  }
+                }}
                 disabled={loadingStage !== null}
                 sx={{
                   display: "flex",
@@ -552,6 +692,46 @@ export default function CandidateListSection({
             );
           })}
         </Menu>
+
+        {/* Email Template Modal */}
+        <Dialog
+          open={emailModalOpen}
+          onClose={() => setEmailModalOpen(false)}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle sx={{ fontWeight: 600, color: "rgba(17, 17, 17, 0.92)" }}>
+            {pendingAction ? `Send email for ${pendingAction.replace("_", " ")}` : "Send Email"}
+          </DialogTitle>
+          <DialogContent dividers sx={{ bgcolor: theme.palette.background.paper }}>
+            {emailLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box sx={{ '.ql-toolbar': { borderRadius: '8px 8px 0 0' }, '.ql-container': { borderRadius: '0 0 8px 8px', minHeight: 220 } }}>
+                {/* @ts-ignore - ReactQuill loaded dynamically */}
+                <ReactQuill theme="snow" value={emailContent} onChange={setEmailContent} modules={quillModules} formats={quillFormats} />
+              </Box>
+            )}
+            {emailError && (
+              <Alert severity="error" sx={{ mt: 2 }}>{emailError}</Alert>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setEmailModalOpen(false)} variant="outlined" color="primary">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendEmailAndMoveStage}
+              variant="contained"
+              color="secondary"
+              disabled={emailLoading || !emailContent}
+            >
+              {emailLoading ? <CircularProgress size={20} color="inherit" /> : 'Send'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Paper>
   );

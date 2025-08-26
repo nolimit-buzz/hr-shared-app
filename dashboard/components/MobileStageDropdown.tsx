@@ -13,6 +13,7 @@ import { useTheme } from '@mui/material/styles';
 interface MobileStageDropdownProps {
   subTabValue: number;
   stageTotals: {
+    // All is computed client-side; not required here
     new: number;
     skill_assessment: number;
     interviews: number;
@@ -62,6 +63,32 @@ const MobileStageDropdown: React.FC<MobileStageDropdownProps> = ({
                   width: "100%",
                 }}
               >
+                <span>All</span>
+                <Chip
+                  label={stageTotals.new + stageTotals.skill_assessment + stageTotals.interviews + stageTotals.acceptance + stageTotals.archived}
+                  size="small"
+                  sx={{
+                    bgcolor: theme.palette.secondary.main,
+                    color: "white",
+                    height: "20px",
+                    "& .MuiChip-label": {
+                      px: 1,
+                      fontSize: "12px",
+                      fontWeight: 500,
+                    },
+                  }}
+                />
+              </Box>
+            </MenuItem>
+            <MenuItem value={1}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
                 <span>Application Review</span>
                 <Chip
                   label={stageTotals.new}
@@ -79,7 +106,7 @@ const MobileStageDropdown: React.FC<MobileStageDropdownProps> = ({
                 />
               </Box>
             </MenuItem>
-            <MenuItem value={1}>
+            <MenuItem value={2}>
               <Box
                 sx={{
                   display: "flex",
@@ -105,7 +132,7 @@ const MobileStageDropdown: React.FC<MobileStageDropdownProps> = ({
                 />
               </Box>
             </MenuItem>
-            <MenuItem value={2}>
+            <MenuItem value={3}>
               <Box
                 sx={{
                   display: "flex",
@@ -131,7 +158,7 @@ const MobileStageDropdown: React.FC<MobileStageDropdownProps> = ({
                 />
               </Box>
             </MenuItem>
-            <MenuItem value={3}>
+            <MenuItem value={4}>
               <Box
                 sx={{
                   display: "flex",
@@ -157,7 +184,7 @@ const MobileStageDropdown: React.FC<MobileStageDropdownProps> = ({
                 />
               </Box>
             </MenuItem>
-            <MenuItem value={4}>
+            <MenuItem value={5}>
               <Box
                 sx={{
                   display: "flex",

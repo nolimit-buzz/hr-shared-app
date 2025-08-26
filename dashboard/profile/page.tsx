@@ -508,14 +508,14 @@ const ProfilePage = () => {
         },
         body: formData
       });
-      
+      console.log('response', response);
       if (response.ok) {
         const data = await response.json();
         setProfileData(prev => ({
           ...prev,
           company: {
             ...prev.company,
-            logo: data.user.company_logo
+            logo: data.company_info.company_logo
           }
         }));
 
@@ -527,17 +527,17 @@ const ProfilePage = () => {
             ...profile,
             personalInfo: {
               ...profile.personalInfo,
-              first_name: data.user.first_name,
-              last_name: data.user.last_name,
-              email: data.user.email,
-              phone_number: data.user.phone_number,
+              first_name: data.personal_info.first_name,
+              last_name: data.personal_info.last_name,
+              email: data.personal_info.email,
+              phone_number: data.personal_info.phone_number,
             },
             companyInfo: {
               ...profile.companyInfo,
-              company_name: data.user.company_name,
-              number_of_employees: data.user.number_of_employees,
-              booking_link: data.user.booking_link,
-              company_logo: data.user.company_logo,
+              company_name: data.company_info.company_name,
+              number_of_employees: data.company_info.number_of_employees,
+              booking_link: data.company_info.booking_link,
+              company_logo: data.company_info.company_logo,
             }
           };
           localStorage.setItem('userProfile', JSON.stringify(updatedProfile));

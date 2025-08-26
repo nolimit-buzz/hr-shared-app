@@ -89,7 +89,7 @@ const StyledStepper = styled(Stepper)(({ theme }) => ({
   },
   '& .MuiStepConnector-line': {
     border: '0.5px dashed rgba(17, 17, 17, 0.68)',
-    
+
   },
   '& .Mui-completed svg': {
     color: 'rgba(29, 175, 97, 1)'
@@ -459,14 +459,14 @@ const FormBuilderField: React.FC<FormBuilderFieldProps> = ({
             value={field.label}
             onChange={(e) => handleChange(index, 'label', e.target.value)}
             variant="outlined"
-            
+
             // disabled={isRequired || isDefaultField}
             sx={{
               width: '100%',
               '& .MuiInputBase-root': {
                 '& input': {
                   pointerEvents: isRequired ? 'none' : 'auto',
-                  paddingX:0,
+                  paddingX: 0,
                   fontSize: '16px !important',
                   color: 'black',
                   fontWeight: 500,
@@ -483,7 +483,7 @@ const FormBuilderField: React.FC<FormBuilderFieldProps> = ({
               }
             }}
           />
-          {!isRequired  && (
+          {!isRequired && (
             <Stack direction={'row'} gap={2} alignItems={'center'} justifyContent={{ xs: 'space-between', sm: 'flex-start' }} width={{ xs: '100%', sm: 'max-content' }} mb={{ xs: 2, sm: 0 }}>
               <FormControl variant="outlined" style={{ minWidth: 150 }}>
                 <Select
@@ -514,7 +514,7 @@ const FormBuilderField: React.FC<FormBuilderFieldProps> = ({
                   <MenuItem value="file">Attachment</MenuItem>
                 </Select>
               </FormControl>
-              <IconButton sx={{padding: 0}} onClick={() => handleDelete(index)}>
+              <IconButton sx={{ padding: 0 }} onClick={() => handleDelete(index)}>
                 <DeleteIcon />
               </IconButton>
             </Stack>
@@ -595,7 +595,7 @@ const FormBuilderField: React.FC<FormBuilderFieldProps> = ({
                   }
                 }}
               />
-              {!isRequired  && (
+              {!isRequired && (
                 <IconButton onClick={() => handleDelete(index, optionIndex)}>
                   <DeleteIcon />
                 </IconButton>
@@ -655,7 +655,7 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
   handleAssessmentChange
 }) => {
   const theme = useTheme();
-  
+
   return (
     <Stack spacing={3} width="100%" padding="28px">
       {/* Info Banner */}
@@ -685,8 +685,8 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
       {/* Assessment Selection */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="flex-start" width={'100%'}>
         <Stack spacing={1} minWidth={'280px'}>
-          <Typography 
-            variant="subtitle1" 
+          <Typography
+            variant="subtitle1"
             sx={{
               color: 'rgba(17, 17, 17, 0.92)',
               fontSize: '20px',
@@ -697,8 +697,8 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
           >
             Add Assessment
           </Typography>
-          <Typography 
-            variant="body2" 
+          <Typography
+            variant="body2"
             sx={{
               color: 'rgba(17, 17, 17, 0.68)',
               fontSize: '16px',
@@ -712,9 +712,9 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
         </Stack>
         <FormControl fullWidth>
           <Select
-            value={selectedAssessment?.id || ''}
+            value={selectedAssessment ? +selectedAssessment : ''}
             onChange={(e) => {
-              const selected = assessments.find(a => a.id === e.target.value);
+              const selected = assessments.find(a => a.id === +e.target.value);
               handleAssessmentChange(selected || null);
             }}
             displayEmpty
@@ -789,7 +789,7 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
                       />
                     )) : null}
                   </Stack>
-                  <Typography variant="caption" sx={{ 
+                  <Typography variant="caption" sx={{
                     color: 'rgba(17, 17, 17, 0.68)',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
@@ -838,10 +838,10 @@ const AboutTheJob = () => {
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [jobUrl, setJobUrl] = useState("");
-  const [notification, setNotification] = useState<{ open: boolean; message: string; severity: AlertColor }>({ 
-    open: false, 
-    message: '', 
-    severity: 'success' 
+  const [notification, setNotification] = useState<{ open: boolean; message: string; severity: AlertColor }>({
+    open: false,
+    message: '',
+    severity: 'success'
   });
   const [technicalSkills, setTechnicalSkills] = useState<string[]>([]);
   const [softSkills, setSoftSkills] = useState<string[]>([]);
@@ -867,6 +867,7 @@ const AboutTheJob = () => {
           }
         });
         const jobData = response.data;
+
         if (!jobData.description.length) {
           const aiSuggestions = await generateInput({ jobTitle: jobData.title, jobLevel: jobData.level, field: '' });
           const expectations = aiSuggestions.expectations;
@@ -880,6 +881,7 @@ const AboutTheJob = () => {
           setTechnicalSkills(allSkills);
           setSoftSkills([]);
           setCustomSkills([]);
+          
 
           setFormData({
             ...jobData,
@@ -889,16 +891,16 @@ const AboutTheJob = () => {
             description: aiSuggestions.aboutTheRole || '',
             salary_min: jobData.salary_min || '',
             salary_max: jobData.salary_max || '',
-            skills: allSkills.slice(0, 6)
+            skills: allSkills.slice(0, 6),
           });
           // Only set default custom fields if no custom fields exist in job data
           setFormFields(jobData.application_form?.required_fields || []);
           setLoading(false);
           return;
         }
-
+        console.log("jobData.assessment_id", jobData, jobData.assessment_id);
         const existingExpectations = jobData.expectations.split('|||') || [];
-
+        setSelectedAssessment(jobData.assessment_id);
         setFormData({
           ...jobData,
           expectations: existingExpectations,
@@ -1140,7 +1142,7 @@ const AboutTheJob = () => {
         value: field.value,
         options: field.options
       })),
-      assessment_ids: selectedAssessment ? [selectedAssessment.id] : [],
+      assessment_id: selectedAssessment ? +selectedAssessment : null,
       expectations: formData.expectations.join('|||'),
       salary_min: parseInt(formData.salary_min.replace(/,/g, '')) || 0,
       salary_max: parseInt(formData.salary_max.replace(/,/g, '')) || 0
@@ -1394,9 +1396,9 @@ const AboutTheJob = () => {
                     }}
                   />
                 </Box>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   px: 1,
                   color: 'rgba(17, 17, 17, 0.48)',
@@ -1598,7 +1600,7 @@ const AboutTheJob = () => {
       <FormContainer>
         <StyledStepper activeStep={currentStep - 1}>
           {steps.map((label, index) => (
-            <Step key={label} sx={{'& .MuiStep-root': {paddingX: { xs: '4px !important', md: '8px' }}}}>
+            <Step key={label} sx={{ '& .MuiStep-root': { paddingX: { xs: '4px !important', md: '8px' } } }}>
               <StyledStepLabel>{label}</StyledStepLabel>
             </Step>
           ))}
@@ -1649,10 +1651,10 @@ const AboutTheJob = () => {
             </>
           )}
         </Stack>
-        <Dialog 
-          open={showDialog} 
-          onClose={handleCloseDialog} 
-          maxWidth="sm" 
+        <Dialog
+          open={showDialog}
+          onClose={handleCloseDialog}
+          maxWidth="sm"
           fullWidth
           PaperProps={{
             sx: {
@@ -1673,10 +1675,10 @@ const AboutTheJob = () => {
             >
               <CloseIcon />
             </IconButton>
-            <DialogTitle sx={{ 
-              display: 'flex', 
+            <DialogTitle sx={{
+              display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center', 
+              alignItems: 'center',
               gap: 2,
               color: 'rgba(17, 17, 17, 0.92)',
               fontSize: '20px',
@@ -1689,7 +1691,7 @@ const AboutTheJob = () => {
             </DialogTitle>
           </Box>
           <DialogContent sx={{ pt: 1, pb: 3, px: 4 }}>
-            <Typography variant="body1" sx={{ 
+            <Typography variant="body1" sx={{
               color: 'rgba(17, 17, 17, 0.68)',
               mb: 2
             }}>
@@ -1722,7 +1724,7 @@ const AboutTheJob = () => {
           autoHideDuration={3000}
           onClose={handleCloseNotification}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          sx={{ 
+          sx={{
             zIndex: 9999,
             '&.MuiSnackbar-root': {
               [theme.breakpoints.down('sm')]: {
@@ -1731,8 +1733,8 @@ const AboutTheJob = () => {
             }
           }}
         >
-          <Alert 
-            onClose={handleCloseNotification} 
+          <Alert
+            onClose={handleCloseNotification}
             severity={notification.severity}
             sx={{
               minWidth: '300px',

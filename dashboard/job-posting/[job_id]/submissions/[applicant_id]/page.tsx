@@ -435,6 +435,7 @@ export default function ApplicantDetails() {
               <ListItem
                 key={item.id}
                 sx={{
+                  borderRadius:"8px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
@@ -973,7 +974,7 @@ export default function ApplicantDetails() {
                 </Box>
 
                 {/* CV Analysis Section */}
-                {cvAnalysis && (
+                {typeof cvAnalysis === 'object' && cvAnalysis && (
                   <Box sx={{ mb: 2 }}>
                     <Stack spacing={2}>
                       <Box>
@@ -984,7 +985,7 @@ export default function ApplicantDetails() {
                           Skills Analysis
                         </Typography>
                         <Stack spacing={1}>
-                          {cvAnalysis.missing_skills.length > 0 && (
+                          {cvAnalysis?.missing_skills?.length > 0 && (
                             <Box>
                               <Typography
                                 variant="body2"
@@ -994,7 +995,7 @@ export default function ApplicantDetails() {
                                 Missing Required Skills:
                               </Typography>
                               <Stack direction="row" spacing={1}>
-                                {cvAnalysis.missing_skills.map(
+                                {cvAnalysis?.missing_skills.map(
                                   (skill, index) => (
                                   <Chip
                                     key={index}
