@@ -357,7 +357,7 @@ const Dashboard = () => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [jobPostings, setJobPostings] = useState([]);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'close'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
   const [isTabLoading, setIsTabLoading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     id: 0,
