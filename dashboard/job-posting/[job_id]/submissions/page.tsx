@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { handleApiError } from '@/utils/errorHandler';
+import { handleApiError } from '@/app/lib/errorHandler';
 import {
   Box,
   Container,
