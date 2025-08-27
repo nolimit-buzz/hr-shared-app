@@ -34,6 +34,7 @@ interface JobPosting {
     skill_assessment: number;
     interviews: number;
     acceptance: number;
+    rejection: number;
     archived: number;
   };
   status: string;
@@ -284,7 +285,7 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
                   setSnackbarOpen(true);
                 }}
                 sx={{
-                  
+
                 }}
                 title="Copy job link"
               >
@@ -372,212 +373,212 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
   return (
     <DashboardCard customStyle={{ padding: '0px', ...customStyle }}>
       <>
-      <Box>
-        <Box sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 2,
-          padding: '16px',
-          position: 'sticky',
-          top: 0,
-          backgroundColor: 'white',
-        }}>
-          <Stack direction={'row'} alignItems={'center'} gap={1} >
-            <Typography
-              variant="h2"
-              fontWeight={'semibold'}
-              fontSize={{ xs: '18px', sm: '24px' }}
-              color={'rgba(17,17,17,0.92)'}
-              letterSpacing={'0.12px'}
-            >
-              Job Listings
-            </Typography>
-            <Typography
-              variant="h2"
-              fontWeight={'semibold'}
-              fontSize={{ xs: '18px', sm: '24px' }}
-              color={'rgba(17,17,17,0.52)'}
-              letterSpacing={'0.12px'}
-            >
-              {`(${jobPostings.length})`}
-            </Typography>
-          </Stack>
-
-          <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              gap={1}
-              sx={{
-                border: '1px solid rgba(17,17,17,0.12)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                width: 'fit-content'
-              }}
-            >
-              <Typography color="rgba(17,17,17,0.62)" fontSize="14px">
-                {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+        <Box>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 2,
+            padding: '16px',
+            position: 'sticky',
+            top: 0,
+            backgroundColor: 'white',
+          }}>
+            <Stack direction={'row'} alignItems={'center'} gap={1} >
+              <Typography
+                variant="h2"
+                fontWeight={'semibold'}
+                fontSize={{ xs: '18px', sm: '24px' }}
+                color={'rgba(17,17,17,0.92)'}
+                letterSpacing={'0.12px'}
+              >
+                Job Listings
               </Typography>
-              <IconButton
-                onClick={handleMenuClick}
+              <Typography
+                variant="h2"
+                fontWeight={'semibold'}
+                fontSize={{ xs: '18px', sm: '24px' }}
+                color={'rgba(17,17,17,0.52)'}
+                letterSpacing={'0.12px'}
+              >
+                {`(${jobPostings.length})`}
+              </Typography>
+            </Stack>
+
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                gap={1}
                 sx={{
-                  padding: '4px',
-                  '&:hover': {
-                    backgroundColor: 'transparent'
-                  }
+                  border: '1px solid rgba(17,17,17,0.12)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  width: 'fit-content'
                 }}
               >
-                <FilterListIcon sx={{ fontSize: '20px' }} />
-              </IconButton>
-            </Stack>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem
-                onClick={() => handleMenuItemClick('all')}
-                selected={statusFilter === 'all'}
+                <Typography color="rgba(17,17,17,0.62)" fontSize="14px">
+                  {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                </Typography>
+                <IconButton
+                  onClick={handleMenuClick}
+                  sx={{
+                    padding: '4px',
+                    '&:hover': {
+                      backgroundColor: 'transparent'
+                    }
+                  }}
+                >
+                  <FilterListIcon sx={{ fontSize: '20px' }} />
+                </IconButton>
+              </Stack>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
               >
-                All
-              </MenuItem>
-              <MenuItem
-                onClick={() => handleMenuItemClick('active')}
-                selected={statusFilter === 'active'}
-              >
-                Active
-              </MenuItem>
-              <MenuItem
-                onClick={() => handleMenuItemClick('closed')}
-                selected={statusFilter === 'closed'}
-              >
-                Closed
-              </MenuItem>
-            </Menu>
-          </Box>
+                <MenuItem
+                  onClick={() => handleMenuItemClick('all')}
+                  selected={statusFilter === 'all'}
+                >
+                  All
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleMenuItemClick('active')}
+                  selected={statusFilter === 'active'}
+                >
+                  Active
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleMenuItemClick('closed')}
+                  selected={statusFilter === 'closed'}
+                >
+                  Closed
+                </MenuItem>
+              </Menu>
+            </Box>
 
-          <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <StyledTabs value={statusFilter} onChange={handleStatusChange} aria-label="job status tabs">
-              <StyledTab label="All" value="all" />
-              <StyledTab label="Active" value="active" />
-              <StyledTab label="Closed" value="closed" />
-            </StyledTabs>
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <StyledTabs value={statusFilter} onChange={handleStatusChange} aria-label="job status tabs">
+                <StyledTab label="All" value="all" />
+                <StyledTab label="Active" value="active" />
+                <StyledTab label="Closed" value="close" />
+              </StyledTabs>
+            </Box>
           </Box>
-        </Box>
-        <Box sx={{
-          overflow: "auto",
-          height: 'calc(600px - 100px)',
-          // height: '600px',
-          scrollbarWidth: 'thin',
-          scrollbarColor: '#032B4420 transparent',
-          '&::-webkit-scrollbar': {
-            height: '4px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: '#032B44',
-            width: '4px',
-            borderRadius: '4px',
-            '&:hover': {
-              background: 'rgba(68, 68, 226, 0.3)',
-            },
-          },
-        }}>
           <Box sx={{
-            width: "100%",
-            display: "table",
-            tableLayout: "fixed",
-            height: 'max-content',
-            // overflowX: 'scroll'
-          }}>
-            <Table>
-              <TableHead>
-                <StyledTableHeaderRow>
-                  <StyledTableHeaderCell>
-                    Role
-                  </StyledTableHeaderCell>
-                  <StyledTableHeaderCell>
-                    Applicants
-                  </StyledTableHeaderCell>
-                  <StyledTableHeaderCell>
-                    Assessment
-                  </StyledTableHeaderCell>
-                  <StyledTableHeaderCell>
-                    Interviews
-                  </StyledTableHeaderCell>
-                  <StyledTableHeaderCell>
-                    Accepted
-                  </StyledTableHeaderCell>
-                  <StyledTableHeaderCell>
-                    Archived
-                  </StyledTableHeaderCell>
-                </StyledTableHeaderRow>
-              </TableHead>
-              <TableBody>
-                {jobPostings.length > 0 ? renderTableContent() : (
-                  <StyledTableRow>
-                    <StyledTableCell colSpan={7} sx={{ textAlign: 'center' }}>
-                      <Box>
-                        <Typography>No job postings found. <Typography onClick={handleOpen} sx={{ color: 'primary.main', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}>Create a new job posting</Typography></Typography>
-
-                      </Box>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Box>
-        </Box>
-      </Box>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{
-          zIndex: 9999,
-        }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity="success"
-          icon={<SuccessIcon />}
-          sx={{
-            minWidth: '300px',
-            backgroundColor: 'primary.main',
-            color: 'secondary.light',
-            borderRadius: '100px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            '& .MuiAlert-icon': {
-              color: '#fff',
-              marginRight: '8px',
-              padding: 0,
+            overflow: "auto",
+            height: 'calc(600px - 100px)',
+            // height: '600px',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#032B4420 transparent',
+            '&::-webkit-scrollbar': {
+              height: '4px',
             },
-            '& .MuiAlert-message': {
-              padding: '6px 0',
-              fontSize: '15px',
-              textAlign: 'center',
-              flex: 'unset',
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
             },
-            '& .MuiAlert-action': {
-              padding: '0 8px 0 0',
-              marginRight: 0,
-              '& .MuiButtonBase-root': {
-                color: '#fff',
-                padding: 1,
+            '&::-webkit-scrollbar-thumb': {
+              background: '#032B44',
+              width: '4px',
+              borderRadius: '4px',
+              '&:hover': {
+                background: 'rgba(68, 68, 226, 0.3)',
               },
             },
+          }}>
+            <Box sx={{
+              width: "100%",
+              display: "table",
+              tableLayout: "fixed",
+              height: 'max-content',
+              // overflowX: 'scroll'
+            }}>
+              <Table>
+                <TableHead>
+                  <StyledTableHeaderRow>
+                    <StyledTableHeaderCell>
+                      Role
+                    </StyledTableHeaderCell>
+                    <StyledTableHeaderCell>
+                      Applicants
+                    </StyledTableHeaderCell>
+                    <StyledTableHeaderCell>
+                      Assessment
+                    </StyledTableHeaderCell>
+                    <StyledTableHeaderCell>
+                      Interviews
+                    </StyledTableHeaderCell>
+                    <StyledTableHeaderCell>
+                      Accepted
+                    </StyledTableHeaderCell>
+                    <StyledTableHeaderCell>
+                      Archived
+                    </StyledTableHeaderCell>
+                  </StyledTableHeaderRow>
+                </TableHead>
+                <TableBody>
+                  {jobPostings.length > 0 ? renderTableContent() : (
+                    <StyledTableRow>
+                      <StyledTableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                        <Box>
+                          <Typography>No job postings found. <Typography onClick={handleOpen} sx={{ color: 'primary.main', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}>Create a new job posting</Typography></Typography>
+
+                        </Box>
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
+        </Box>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={4000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{
+            zIndex: 9999,
           }}
         >
-          Job opening link has been copied to clipboard
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity="success"
+            icon={<SuccessIcon />}
+            sx={{
+              minWidth: '300px',
+              backgroundColor: 'primary.main',
+              color: 'secondary.light',
+              borderRadius: '100px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '& .MuiAlert-icon': {
+                color: '#fff',
+                marginRight: '8px',
+                padding: 0,
+              },
+              '& .MuiAlert-message': {
+                padding: '6px 0',
+                fontSize: '15px',
+                textAlign: 'center',
+                flex: 'unset',
+              },
+              '& .MuiAlert-action': {
+                padding: '0 8px 0 0',
+                marginRight: 0,
+                '& .MuiButtonBase-root': {
+                  color: '#fff',
+                  padding: 1,
+                },
+              },
+            }}
+          >
+            Job opening link has been copied to clipboard
+          </Alert>
+        </Snackbar>
       </>
     </DashboardCard>
   );
