@@ -41,6 +41,9 @@ import { useRouter } from 'next/navigation';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
 
 // Custom styled TextField component
 const StyledTextField = styled(TextField)(({ theme }) => ({
@@ -89,6 +92,8 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
     color: 'rgba(17, 17, 17, 0.6)',
     fontSize: '15px',
     fontWeight: 400,
+    marginTop: '10px',
+    marginLeft: 0,
   }
 }));
 
@@ -196,6 +201,9 @@ const ProfilePage = () => {
   } | null>(null);
   const [calendlyEvents, setCalendlyEvents] = useState<any[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
+  const [loadingOpenaiKey, setLoadingOpenaiKey] = useState<boolean>(false);
+  const [showOpenaiKey, setShowOpenaiKey] = useState<boolean>(false);
 
   useEffect(() => {
     // Get profile data from localStorage
@@ -219,11 +227,55 @@ const ProfilePage = () => {
           about: profile.companyInfo.about_company || '',
           bookingLink: profile.companyInfo.booking_link || '',
           website: profile.companyInfo.company_website || '',
-        }
-      });
+            }
+          });
+
+      // Prefill OpenAI API key if present in stored profile
+      if (profile.companyInfo && profile.companyInfo.openai_api_key) {
+        setOpenaiApiKey(profile.companyInfo.openai_api_key);
+      }
     }
-        setLoading(false);
+    // Regardless of whether we had localStorage or not, stop loading so UI renders
+    setLoading(false);
   }, []);
+
+  // Fetch latest company profile to get existing openai_api_key when opening Integrations
+  useEffect(() => {
+    const fetchCompanyProfile = async () => {
+      try {
+        setLoadingOpenaiKey(true);
+        const token = localStorage.getItem('jwt');
+        const resp = await fetch('https://app.elevatehr.ai/wp-json/elevatehr/v1/company/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const key = data?.company_info?.openai_api_key || '';
+          setOpenaiApiKey(key);
+          // sync to localStorage userProfile for consistency
+          const userProfile = localStorage.getItem('userProfile');
+          if (userProfile) {
+            const profile = JSON.parse(userProfile);
+            const updatedProfile = {
+              ...profile,
+              companyInfo: {
+                ...profile.companyInfo,
+                openai_api_key: key,
+              }
+            };
+            localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch company profile (openai_api_key):', e);
+      } finally {
+        setLoadingOpenaiKey(false);
+      }
+    };
+    if (activeSection === 'integrations') {
+      fetchCompanyProfile();
+    }
+  }, [activeSection]);
 
   // Update localStorage when profile data changes
   useEffect(() => {
@@ -731,6 +783,42 @@ const ProfilePage = () => {
   const handleLogout = () => {
     localStorage.removeItem('userProfile');
     router.push('/');
+  };
+
+  const handleSaveOpenAIKey = async () => {
+    try {
+      setSaving(true);
+      const token = localStorage.getItem('jwt');
+      const response = await fetch('https://app.elevatehr.ai/wp-json/elevatehr/v1/company/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ openai_api_key: openaiApiKey })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setNotification({ open: true, message: 'OpenAI API key updated successfully', severity: 'success' });
+        // Update localStorage profile cache
+        const userProfile = localStorage.getItem('userProfile');
+        if (userProfile) {
+          const profile = JSON.parse(userProfile);
+          const updatedProfile = {
+            ...profile,
+            companyInfo: { ...profile.companyInfo, openai_api_key: openaiApiKey }
+          };
+          localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+        }
+      } else {
+        setNotification({ open: true, message: data?.message || 'Failed to update OpenAI API key', severity: 'error' });
+      }
+    } catch (error) {
+      console.error('Error updating OpenAI API key:', error);
+      setNotification({ open: true, message: 'Error updating OpenAI API key', severity: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -1572,69 +1660,72 @@ const ProfilePage = () => {
                 </Box>
 
                 <Grid container spacing={3}>
-                  {/* Calendly Integration */}
+                  {/* OpenAI API Key */}
                   <Grid item xs={12}>
-                    <Paper 
-                      elevation={0} 
-                      sx={{ 
-                        p: 3, 
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 3,
                         border: '1px solid',
                         borderColor: 'divider',
                         borderRadius: '8px',
-                        bgcolor: integrations.calendly.connected ? 'secondary.light' : 'background.paper'
+                        bgcolor: 'background.paper'
                       }}
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                         <Box>
                           <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 0.5 }}>
-                            Calendly
+                            OpenAI API Key
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'text.grey.100' }}>
-                            Schedule interviews and meetings seamlessly
+                            Add your OpenAI API key to enable AI features across the app.
                           </Typography>
                         </Box>
-                        <Button
-                          variant={integrations.calendly.connected ? "outlined" : "contained"}
-                          onClick={() => router.push('/dashboard/profile/calendly-setup')}
-                          disabled={saving}
-                        >
-                          {integrations.calendly.connected ? 'Connected' : 'Setup'}
-                        </Button>
                       </Box>
-                      {!integrations.calendly.connected && (
-                        <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(0, 0, 0, 0.02)', borderRadius: '8px' }}>
-                          <Typography variant="body2" sx={{ color: 'text.grey.100', mb: 1 }}>
-                            To connect Calendly, you&apos;ll need to:
-                          </Typography>
-                          <Box component="ol" sx={{ pl: 2, mb: 0 }}>
-                            <Typography component="li" variant="body2" sx={{ color: 'text.grey.100', mb: 1 }}>
-                              Create a Calendly developer account at{' '}
-                              <Link href="https://developer.calendly.com/" target="_blank" rel="noopener noreferrer" sx={{ color: 'primary.main' }}>
-                                developer.calendly.com
-                              </Link>
-                            </Typography>
-                            <Typography component="li" variant="body2" sx={{ color: 'text.grey.100', mb: 1 }}>
-                              Create an OAuth application and whitelist this domain:
-                              <Box component="code" sx={{
-                                display: 'block',
-                                mt: 1,
-                                p: 1,
-                                bgcolor: 'rgba(0, 0, 0, 0.04)',
-                                borderRadius: '4px',
-                                fontFamily: 'monospace'
-                              }}>
-                                {window.location.origin}
+
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={8}>
+                          <StyledTextField
+                            label="OpenAI API Key"
+                            type={showOpenaiKey ? 'text' : 'password'}
+                            fullWidth
+                            value={openaiApiKey}
+                            onChange={(e) => setOpenaiApiKey(e.target.value)}
+                            placeholder="sk-..."
+                            helperText={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <InfoOutlined sx={{ fontSize: 18, color: 'rgba(17, 17, 17, 0.6)' }} />
+                                <Typography variant="body2" sx={{ color: 'rgba(17, 17, 17, 0.6)' }}>
+                                  {loadingOpenaiKey ? 'Loading your existing key...' : (
+                                    <>
+                                      Don't have a key yet? Follow the guide to create one on the OpenAI dashboard and paste it here.
+                                      {' '}<Link target="_blank" href="/dashboard/profile/openai-api-key-setup" sx={{ color: 'primary.main', textDecoration: 'none' }}>OpenAI API key setup</Link>.
+                                    </>
+                                  )}
+                                </Typography>
                               </Box>
-                            </Typography>
-                            <Typography component="li" variant="body2" sx={{ color: 'text.grey.100' }}>
-                              Send your Client ID and Secret to{' '}
-                              <Link href="mailto:info@nolimitbuzz.net" sx={{ color: 'primary.main' }}>
-                                info@nolimitbuzz.net
-                              </Link>
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
+                            }
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    aria-label={showOpenaiKey ? 'Hide API key' : 'Show API key'}
+                                    onClick={() => setShowOpenaiKey(prev => !prev)}
+                                    edge="end"
+                                  >
+                                    {showOpenaiKey ? <VisibilityOff /> : <Visibility />}
+                                  </IconButton>
+                                </InputAdornment>
+                              )
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                          <PrimaryButton variant="contained" onClick={handleSaveOpenAIKey} disabled={saving || !openaiApiKey}>
+                            {saving ? 'Saving...' : 'Save Key'}
+                          </PrimaryButton>
+                        </Grid>
+                      </Grid>
                     </Paper>
                   </Grid>
                 </Grid>

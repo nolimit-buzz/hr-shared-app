@@ -1359,10 +1359,10 @@ export default function Home() {
                  {filteredCandidates?.applications?.length > 1 && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box
                       sx={{
-                        borderBottom: {
-                          xs: "none",
-                          lg: "1px solid rgba(0, 0, 0, 0.12)",
-                        },
+                        // borderBottom: {
+                        //   xs: "none",
+                        //   lg: "1px solid rgba(0, 0, 0, 0.12)",
+                        // },
                         display: 'flex',
                         justifyContent: 'flex-start',
                         alignItems: 'center',
@@ -1685,29 +1685,30 @@ export default function Home() {
                       <CircularProgress />
                     </Box>
                   ) : (
-                    <Box sx={{
-                      '& .quill': {
-                        bgcolor: '#FFF',
-                        borderRadius: '8px',
-                        border: '0.8px solid rgba(17, 17, 17, 0.14)',
-                        transition: 'all 0.3s ease',
-                        '&:focus-within': {
-                          border: `0.8px solid ${theme.palette.primary.main}`,
-                          boxShadow: `0 0 0 1px ${theme.palette.primary.main}25`,
-                        },
-                        '& .ql-toolbar': {
-                          borderTopLeftRadius: '8px',
-                          borderTopRightRadius: '8px',
-                          border: 'none',
-                          borderBottom: '0.8px solid rgba(17, 17, 17, 0.14)',
-                        },
-                        '& .ql-container': {
-                          border: 'none',
-                          borderBottomLeftRadius: '8px',
-                          borderBottomRightRadius: '8px',
-                        }
-                      }
-                    }}>
+                    
+              <Box sx={{
+                '& .quill': {
+                  bgcolor: '#FFF',
+                  borderRadius: '8px',
+                  border: '0.8px solid rgba(17, 17, 17, 0.14)',
+                  transition: 'all 0.3s ease',
+                  '&:focus-within': {
+                    border: `0.8px solid ${theme.palette.primary.main}`,
+                    boxShadow: `0 0 0 1px ${theme.palette.primary.main}25`,
+                  },
+                  '& .ql-toolbar': {
+                    borderTopLeftRadius: '8px',
+                    borderTopRightRadius: '8px',
+                    border: 'none',
+                    borderBottom: '0.8px solid rgba(17, 17, 17, 0.14)',
+                  },
+                  '& .ql-container': {
+                    border: 'none',
+                    borderBottomLeftRadius: '8px',
+                    borderBottomRightRadius: '8px',
+                  }
+                }
+              }}>
                       {/* @ts-ignore - ReactQuill loaded dynamically */}
                       <ReactQuill className="quill" theme="snow" value={bulkEmailContent} onChange={setBulkEmailContent} modules={quillModules} formats={quillFormats} />
                     </Box>

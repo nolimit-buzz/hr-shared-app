@@ -335,7 +335,7 @@ export default function CandidateListSection({
           body: JSON.stringify({
             entries: [candidate.id],
             stage: pendingAction,
-            custom_email: emailContent,
+            custom_email_template: emailContent,
           }),
         }
       );
@@ -709,7 +709,30 @@ export default function CandidateListSection({
                 <CircularProgress />
               </Box>
             ) : (
-              <Box sx={{ '.ql-toolbar': { borderRadius: '8px 8px 0 0' }, '.ql-container': { borderRadius: '0 0 8px 8px', minHeight: 220 } }}>
+             
+              <Box sx={{
+                '& .quill': {
+                  bgcolor: '#FFF',
+                  borderRadius: '8px',
+                  border: '0.8px solid rgba(17, 17, 17, 0.14)',
+                  transition: 'all 0.3s ease',
+                  '&:focus-within': {
+                    border: `0.8px solid ${theme.palette.primary.main}`,
+                    boxShadow: `0 0 0 1px ${theme.palette.primary.main}25`,
+                  },
+                  '& .ql-toolbar': {
+                    borderTopLeftRadius: '8px',
+                    borderTopRightRadius: '8px',
+                    border: 'none',
+                    borderBottom: '0.8px solid rgba(17, 17, 17, 0.14)',
+                  },
+                  '& .ql-container': {
+                    border: 'none',
+                    borderBottomLeftRadius: '8px',
+                    borderBottomRightRadius: '8px',
+                  }
+                }
+              }}>
                 {/* @ts-ignore - ReactQuill loaded dynamically */}
                 <ReactQuill theme="snow" value={emailContent} onChange={setEmailContent} modules={quillModules} formats={quillFormats} />
               </Box>
