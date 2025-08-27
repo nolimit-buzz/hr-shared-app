@@ -36,7 +36,7 @@ import '../../../global.css';
 import { BorderStyle } from '@mui/icons-material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import axios from 'axios';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { generateInput, generateSkillsForRole } from '../../../lib/openai';
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useTheme } from '@mui/material/styles';
@@ -313,6 +313,7 @@ interface FormData {
   level?: string;
   skills: string[];
   about_role: string;
+  assessment_id?: number | string;
   [key: string]: any;
 }
 
@@ -712,12 +713,65 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
         </Stack>
         <FormControl fullWidth>
           <Select
-            value={selectedAssessment ? +selectedAssessment : ''}
+            value={selectedAssessment ? selectedAssessment.id : ''}
             onChange={(e) => {
-              const selected = assessments.find(a => a.id === +e.target.value);
-              handleAssessmentChange(selected || null);
+              const value = e.target.value;
+              if (!value) {
+                handleAssessmentChange(null);
+                return;
+              }
+              const selected = assessments.find(a => a.id === value);
+              if (selected) {
+                handleAssessmentChange(selected);
+              }
             }}
             displayEmpty
+            renderValue={(value) => {
+              if (!value) return 'Select from your list of assessments';
+              const assessment = assessments.find(a => a.id === value);
+              if (!assessment) return 'Select from your list of assessments';
+              
+              return (
+                <Stack spacing={0.5} width="100%">
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {assessment.level} {assessment.title}
+                  </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="caption" sx={{ color: 'rgba(17, 17, 17, 0.68)' }}>
+                      {assessment.type ? assessment.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : ''}
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                    {assessment.skills ? assessment.skills.split(',').slice(0, 2).map((skill, index) => (
+                      <Chip
+                        key={index}
+                        label={skill.trim()}
+                        size="small"
+                        sx={{
+                          height: '20px',
+                          fontSize: '0.75rem',
+                          backgroundColor: 'rgba(68, 68, 226, 0.08)',
+                          color: '#4444E2',
+                          '& .MuiChip-label': {
+                            px: 1
+                          }
+                        }}
+                      />
+                    )) : null}
+                  </Stack>
+                  <Typography variant="caption" sx={{
+                    color: 'rgba(17, 17, 17, 0.68)',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {assessment.description}
+                  </Typography>
+                </Stack>
+              );
+            }}
             sx={{
               borderRadius: '8px',
               border: '0.8px solid rgba(17, 17, 17, 0.14)',
@@ -811,6 +865,8 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({
 
 const AboutTheJob = () => {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const jobId = params['job_id'];
   const theme = useTheme()
   const steps = ['About the Job', 'Application Form', 'Assessment'];
@@ -830,6 +886,7 @@ const AboutTheJob = () => {
     salary_error: '',
     skills: [],
     about_role: '',
+    assessment_id: undefined,
   });
 
   const [formFields, setFormFields] = useState<FormField[]>([]);
@@ -847,6 +904,30 @@ const AboutTheJob = () => {
   const [softSkills, setSoftSkills] = useState<string[]>([]);
   const [customSkills, setCustomSkills] = useState<string[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+
+  // Initialize step from URL parameter
+  useEffect(() => {
+    const stepParam = searchParams.get('step');
+    if (stepParam) {
+      const stepNumber = parseInt(stepParam, 10);
+      if (stepNumber >= 1 && stepNumber <= steps.length) {
+        setCurrentStep(stepNumber);
+      }
+    }
+  }, [searchParams, steps.length]);
+
+  // Update URL when step changes
+  const updateStepInURL = (step: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('step', step.toString());
+    router.replace(url.pathname + url.search, { scroll: false });
+  };
+
+  // Function to handle step changes
+  const handleStepChange = (step: number) => {
+    setCurrentStep(step);
+    updateStepInURL(step);
+  };
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -898,16 +979,35 @@ const AboutTheJob = () => {
           setLoading(false);
           return;
         }
-        console.log("jobData.assessment_id", jobData, jobData.assessment_id);
+
         const existingExpectations = jobData.expectations.split('|||') || [];
-        setSelectedAssessment(jobData.assessment_id);
+        
+        console.log('Job data received:', {
+          jobId: jobData.id,
+          assessment_id: jobData.assessment_id,
+          assessment_id_type: typeof jobData.assessment_id,
+          has_assessment: jobData.has_assessment,
+          quiz_assessment: jobData.quiz_assessment
+        });
+        
+        // Determine the assessment ID from multiple possible sources
+        let assessmentId = jobData.assessment_id;
+        if (!assessmentId && jobData.quiz_assessment && jobData.quiz_assessment.id) {
+          assessmentId = jobData.quiz_assessment.id;
+        }
+        
+        console.log('Final assessment ID to use:', assessmentId);
+        
+        // Set form data first
         setFormData({
           ...jobData,
           expectations: existingExpectations,
           salary_min: jobData.salary_min || '',
           salary_max: jobData.salary_max || '',
-          skills: jobData.skills.split(',')
+          skills: jobData.skills.split(','),
+          assessment_id: assessmentId || undefined
         });
+
         // Only set default custom fields if no custom fields exist in job data
         setFormFields(jobData.application_form?.required_fields || []);
 
@@ -935,6 +1035,11 @@ const AboutTheJob = () => {
           }
         );
         if (response.data.status === 'success') {
+          console.log('Assessments loaded:', {
+            count: response.data.assessments.length,
+            assessmentIds: response.data.assessments.map((a: Assessment) => a.id),
+            assessments: response.data.assessments
+          });
           setAssessments(response.data.assessments);
         } else {
           console.error('Error fetching assessments:', response.data.message);
@@ -948,6 +1053,90 @@ const AboutTheJob = () => {
 
     fetchAssessments();
   }, []);
+
+  // Set selected assessment when either assessments or job data is loaded
+  useEffect(() => {
+    console.log('useEffect triggered:', {
+      assessmentsLength: assessments.length,
+      formDataAssessmentId: formData.assessment_id,
+      selectedAssessment: selectedAssessment,
+      assessmentIdType: typeof formData.assessment_id
+    });
+
+    // Check if we have assessments, an assessment ID, and no currently selected assessment
+    if (assessments.length > 0 && 
+        formData.assessment_id && 
+        formData.assessment_id !== '' && 
+        formData.assessment_id !== null && 
+        formData.assessment_id !== undefined && 
+        !selectedAssessment) {
+      
+      // Convert assessment_id to number if it's a string
+      const assessmentId = typeof formData.assessment_id === 'string' 
+        ? parseInt(formData.assessment_id, 10) 
+        : formData.assessment_id;
+      
+      console.log('Looking for assessment with ID:', assessmentId);
+      
+      if (typeof assessmentId === 'number' && !isNaN(assessmentId)) {
+        const assessment = assessments.find(a => a.id === assessmentId);
+        if (assessment) {
+          console.log('Found and setting selected assessment:', assessment);
+          setSelectedAssessment(assessment);
+        } else {
+          console.log('Assessment not found in assessments array. Available IDs:', assessments.map(a => a.id));
+        }
+      }
+    }
+  }, [assessments, formData.assessment_id, selectedAssessment]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Current state:', {
+      assessmentsCount: assessments.length,
+      formDataAssessmentId: formData.assessment_id,
+      selectedAssessment: selectedAssessment,
+      currentStep
+    });
+  }, [assessments.length, formData.assessment_id, selectedAssessment, currentStep]);
+
+  // Ensure assessment is selected when user navigates to assessment step
+  useEffect(() => {
+    if (currentStep === 3 && assessments.length > 0 && formData.assessment_id && !selectedAssessment) {
+      console.log('User navigated to assessment step, attempting to set assessment...');
+      
+      const assessmentId = typeof formData.assessment_id === 'string' 
+        ? parseInt(formData.assessment_id, 10) 
+        : formData.assessment_id;
+      
+      if (typeof assessmentId === 'number' && !isNaN(assessmentId)) {
+        const assessment = assessments.find(a => a.id === assessmentId);
+        if (assessment) {
+          console.log('Setting assessment from step navigation:', assessment);
+          setSelectedAssessment(assessment);
+        }
+      }
+    }
+  }, [currentStep, assessments, formData.assessment_id, selectedAssessment]);
+
+  // Initial check for assessment when component mounts
+  useEffect(() => {
+    if (assessments.length > 0 && formData.assessment_id && !selectedAssessment) {
+      console.log('Component mounted, checking for existing assessment...');
+      
+      const assessmentId = typeof formData.assessment_id === 'string' 
+        ? parseInt(formData.assessment_id, 10) 
+        : formData.assessment_id;
+      
+      if (typeof assessmentId === 'number' && !isNaN(assessmentId)) {
+        const assessment = assessments.find(a => a.id === assessmentId);
+        if (assessment) {
+          console.log('Setting assessment from initial mount:', assessment);
+          setSelectedAssessment(assessment);
+        }
+      }
+    }
+  }, []); // Empty dependency array - runs only once
 
   const handleChange = (field: string, value: string) => {
     setFormData(prevData => ({
@@ -1056,7 +1245,13 @@ const AboutTheJob = () => {
   };
 
   const handleAssessmentChange = (assessment: Assessment | null) => {
+    console.log('Assessment change:', assessment);
     setSelectedAssessment(assessment);
+    // Also update the formData to keep it in sync
+    setFormData(prev => ({
+      ...prev,
+      assessment_id: assessment ? assessment.id : undefined
+    }));
   };
 
   const validateSalaryRange = (value: string) => {
@@ -1142,12 +1337,15 @@ const AboutTheJob = () => {
         value: field.value,
         options: field.options
       })),
-      assessment_id: selectedAssessment ? +selectedAssessment : null,
+      assessment_ids: selectedAssessment ? [selectedAssessment.id] : [],
       expectations: formData.expectations.join('|||'),
       salary_min: parseInt(formData.salary_min.replace(/,/g, '')) || 0,
       salary_max: parseInt(formData.salary_max.replace(/,/g, '')) || 0
     };
 
+    console.log("Final form data:", formData);
+    console.log("Selected assessment:", selectedAssessment);
+    console.log("Assessment IDs being sent:", collatedData.assessment_ids);
     console.log("Updating job post...", collatedData);
 
     if (!jobId) {
@@ -1547,6 +1745,11 @@ const AboutTheJob = () => {
           </Stack>
         );
       case 3:
+        console.log('Rendering AssessmentStep with props:', {
+          assessmentsCount: assessments.length,
+          selectedAssessment: selectedAssessment,
+          formDataAssessmentId: formData.assessment_id
+        });
         return (
           <AssessmentStep
             assessments={assessments}
@@ -1569,6 +1772,37 @@ const AboutTheJob = () => {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
       }} height={'204px'} display={'flex'} flexDirection={'column'} alignItems={'center'} justifyContent={'center'}>
+        {/* Back Button */}
+        <Box sx={{ 
+          position: 'absolute', 
+          top: '20px', 
+          left: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          cursor: 'pointer',
+          color: 'white',
+          '&:hover': {
+            opacity: 0.8
+          }
+        }} onClick={() => router.back()}>
+          <Box component="span" sx={{ 
+            fontSize: '20px',
+            fontWeight: 'bold',
+            transform: 'rotate(180deg)'
+          }}>
+            →
+          </Box>
+          <Typography sx={{
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}>
+            Back
+          </Typography>
+        </Box>
+        
         {loading ? (
           <Stack spacing={2} alignItems="center">
             <Skeleton variant="text" width="120%" height={40} />
@@ -1600,8 +1834,30 @@ const AboutTheJob = () => {
       <FormContainer>
         <StyledStepper activeStep={currentStep - 1}>
           {steps.map((label, index) => (
-            <Step key={label} sx={{ '& .MuiStep-root': { paddingX: { xs: '4px !important', md: '8px' } } }}>
-              <StyledStepLabel>{label}</StyledStepLabel>
+            <Step 
+              key={label} 
+              sx={{ 
+                '& .MuiStep-root': { paddingX: { xs: '4px !important', md: '8px' } },
+                cursor: 'pointer',
+                '&:hover': {
+                  '& .MuiStepLabel-root': {
+                    color: 'primary.main'
+                  }
+                }
+              }}
+              onClick={() => handleStepChange(index + 1)}
+            >
+              <StyledStepLabel 
+                sx={{ 
+                  cursor: 'pointer',
+                  '&:hover': {
+                    color: 'primary.main'
+                  }
+                }}
+                onClick={() => handleStepChange(index + 1)}
+              >
+                {label}
+              </StyledStepLabel>
             </Step>
           ))}
         </StyledStepper>
@@ -1614,7 +1870,7 @@ const AboutTheJob = () => {
               <StyledOutlineButton
                 variant="outlined"
                 color="primary"
-                onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
+                onClick={() => handleStepChange(Math.max(currentStep - 1, 1))}
                 style={{ alignSelf: 'flex-end', marginTop: '20px', marginRight: '10px' }}
               >
                 Back
@@ -1634,7 +1890,7 @@ const AboutTheJob = () => {
                 <StyledOutlineButton
                   variant="outlined"
                   // color="primary"
-                  onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
+                  onClick={() => handleStepChange(Math.max(currentStep - 1, 1))}
                   style={{ alignSelf: 'flex-end', marginTop: '20px', marginRight: '10px' }}
                 >
                   Back
@@ -1642,7 +1898,7 @@ const AboutTheJob = () => {
               )}
               <StyledButton
                 variant="contained"
-                onClick={() => setCurrentStep((prev) => Math.min(prev + 1, 3))}
+                onClick={() => handleStepChange(Math.min(currentStep + 1, 3))}
                 sx={{ alignSelf: 'flex-end', marginTop: '20px', backgroundColor: theme.palette.primary.main, color: 'secondary.light', '&:hover': { backgroundColor: theme.palette.primary.main, color: 'secondary.light' } }}
 
               >

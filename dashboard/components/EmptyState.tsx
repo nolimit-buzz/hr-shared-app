@@ -14,14 +14,16 @@ const EmptyState: React.FC<EmptyStateProps> = ({ subTabValue, assessmentType }) 
 
     switch (subTabValue) {
       case 0:
+        return "No applications for this job";
+        case 1:
         return "No applications to review";
-      case 1:
-        return "No candidates in skill assessment";
       case 2:
-        return "No interviews scheduled";
+        return "No candidates in skill assessment";
       case 3:
-        return "No accepted candidates";
+        return "No interviews scheduled";
       case 4:
+        return "No accepted candidates";
+      case 5:
         return "No archived candidates";
       default:
         return "No candidates found";
@@ -65,6 +67,31 @@ const EmptyState: React.FC<EmptyStateProps> = ({ subTabValue, assessmentType }) 
         </svg>
       )}
       {subTabValue === 1 && (
+        <svg
+          width="64"
+          height="64"
+          viewBox="0 0 32 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect width="32" height="32" rx="16" fill="#1CC47E" />
+          <path
+            d="M11.8335 11.8335L20.1668 20.1668"
+            stroke="white"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M20.1667 13.5L20.1667 20.1667L13.5 20.1667"
+            stroke="white"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+      {subTabValue === 2 && (
         <svg
           width="64"
           height="64"
@@ -117,7 +144,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ subTabValue, assessmentType }) 
           />
         </svg>
       )}
-      {subTabValue === 2 && (
+      {subTabValue === 3 && (
         <svg
           width="64"
           height="64"
@@ -149,7 +176,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ subTabValue, assessmentType }) 
           />
         </svg>
       )}
-      {subTabValue === 3 && (
+      {subTabValue === 4 && (
         <svg
           width="64"
           height="64"
@@ -181,7 +208,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ subTabValue, assessmentType }) 
           />
         </svg>
       )}
-      {subTabValue === 4 && (
+      {subTabValue === 5 && (
         <svg
           width="64"
           height="64"
@@ -227,12 +254,14 @@ const EmptyState: React.FC<EmptyStateProps> = ({ subTabValue, assessmentType }) 
               word.charAt(0).toUpperCase() + word.slice(1)
             ).join(' ')} yet.`
           : subTabValue === 0
-          ? "No applications to review"
+          ? "No applications for this job"
           : subTabValue === 1
-          ? "No candidates in skill assessment"
+          ? "No applications to review"
           : subTabValue === 2
-          ? "No interviews scheduled"
+          ? "No candidates in skill assessment"
           : subTabValue === 3
+          ? "No interviews scheduled"
+          : subTabValue === 4
           ? "No accepted candidates"
           : "No archived candidates"}
       </Typography>

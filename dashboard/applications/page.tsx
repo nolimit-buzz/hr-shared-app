@@ -397,7 +397,7 @@ export default function Home() {
       case 3:
         return 'acceptance';
       case 4:
-        return 'acceptance';
+        return 'archived';
       default:
         return 'new';
     }

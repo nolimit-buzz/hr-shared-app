@@ -345,7 +345,7 @@ const JobDescription = ({ jobDetails, loading, error, getJobId, setError, setPri
         </Box>
 
         {/* Edit Button */}
-        <Link href={`/dashboard/create-job-posting/${getJobId()}`}>
+        <Link href={`/dashboard/create-job-posting/${getJobId()}?step=1`}>
           <Button
             variant="contained"
             startIcon={<Edit />}

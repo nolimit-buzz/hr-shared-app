@@ -848,7 +848,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (subTabValue === 1) {
+    if (subTabValue === 2) {
       fetchAssessments();
     }
   }, [subTabValue]);
@@ -1352,16 +1352,17 @@ export default function Home() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     py: 2,
-                    borderBottom: {
-                      xs: "none",
-                      lg: "1px solid rgba(0, 0, 0, 0.12)",
-                    },
+                   
                   }}
                 >
                   {/* Select All control */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                 {filteredCandidates?.applications?.length > 1 && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box
                       sx={{
+                        borderBottom: {
+                          xs: "none",
+                          lg: "1px solid rgba(0, 0, 0, 0.12)",
+                        },
                         display: 'flex',
                         justifyContent: 'flex-start',
                         alignItems: 'center',
@@ -1401,7 +1402,7 @@ export default function Home() {
                       })()}
                     </Box>
                     {selectedEntries?.length > 0 &&
-                      subTabValue !== 3 && ( // Hide for acceptance phase
+                      subTabValue !== 4 && ( // Hide for acceptance phase
                         <>
 
                           <Box
@@ -1428,9 +1429,9 @@ export default function Home() {
 
                         </>
                       )}
-                  </Box>
+                  </Box>}
                   {selectedEntries?.length > 0 &&
-                    subTabValue !== 3 && (
+                    subTabValue !== 4 && (
                       <Box sx={{ display: "flex", gap: 2 }}>
                         {(() => {
                           console.log('Current stage:', getStageValue(subTabValue));
@@ -1488,7 +1489,7 @@ export default function Home() {
                 </Box>
 
                 {/* Assessment Tabs */}
-                {subTabValue === 1 && (
+                {subTabValue === 2 && (
                   <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                     {(() => {
                       console.log('Rendering assessment tabs with:', { selectedAssessmentType, assessments });
@@ -1684,9 +1685,31 @@ export default function Home() {
                       <CircularProgress />
                     </Box>
                   ) : (
-                    <Box sx={{ '.ql-toolbar': { borderRadius: '8px 8px 0 0' }, '.ql-container': { borderRadius: '0 0 8px 8px', minHeight: 220 } }}>
+                    <Box sx={{
+                      '& .quill': {
+                        bgcolor: '#FFF',
+                        borderRadius: '8px',
+                        border: '0.8px solid rgba(17, 17, 17, 0.14)',
+                        transition: 'all 0.3s ease',
+                        '&:focus-within': {
+                          border: `0.8px solid ${theme.palette.primary.main}`,
+                          boxShadow: `0 0 0 1px ${theme.palette.primary.main}25`,
+                        },
+                        '& .ql-toolbar': {
+                          borderTopLeftRadius: '8px',
+                          borderTopRightRadius: '8px',
+                          border: 'none',
+                          borderBottom: '0.8px solid rgba(17, 17, 17, 0.14)',
+                        },
+                        '& .ql-container': {
+                          border: 'none',
+                          borderBottomLeftRadius: '8px',
+                          borderBottomRightRadius: '8px',
+                        }
+                      }
+                    }}>
                       {/* @ts-ignore - ReactQuill loaded dynamically */}
-                      <ReactQuill theme="snow" value={bulkEmailContent} onChange={setBulkEmailContent} modules={quillModules} formats={quillFormats} />
+                      <ReactQuill className="quill" theme="snow" value={bulkEmailContent} onChange={setBulkEmailContent} modules={quillModules} formats={quillFormats} />
                     </Box>
                   )}
                   {bulkEmailError && (
