@@ -52,6 +52,8 @@ type StageType = 'new' | 'skill_assessment' | 'archived' | 'acceptance' | 'inter
 
 // Update the props interface
 interface CandidateListSectionProps {
+  isQuickActionsVisible?: boolean;
+  isCheckboxVisible?: boolean;
   candidate: any; // Update with proper type
   isSelected: boolean;
   onSelectCandidate: (id: number) => void;
@@ -68,6 +70,8 @@ interface CandidateListSectionProps {
 type Skill = string;
 
 export default function CandidateListSection({
+  isQuickActionsVisible,
+  isCheckboxVisible,
   candidate,
   isSelected,
   onSelectCandidate,
@@ -378,7 +382,7 @@ export default function CandidateListSection({
       }}
     >
       {/* {!disableSelection && ( */}
-        <Box sx={{ p: 0 }} className="checkbox-container">
+        {isCheckboxVisible && <Box sx={{ p: 0 }} className="checkbox-container">
           <Checkbox
             sx={{ p: 0 }}
             onChange={() => onSelectCandidate(candidate.id)}
@@ -410,7 +414,7 @@ export default function CandidateListSection({
               </Box>
             }
           />
-        </Box>
+        </Box>}
       {/* )} */}
       <Box
         sx={{
@@ -607,6 +611,7 @@ export default function CandidateListSection({
         </Box>
 
         {/* Quick Actions Button - Always visible */}
+        {isQuickActionsVisible && (
         <Button
           variant="outlined"
           onClick={handleClick}
@@ -629,7 +634,7 @@ export default function CandidateListSection({
         >
           {loadingStage ? 'Updating...' : 'Quick actions'}
         </Button>
-
+        )}
         {/* Quick Actions Menu */}
         <Menu
           anchorEl={anchorEl}

@@ -340,50 +340,50 @@ export default function Home() {
     return skillColors[colorIndex];
   };
 
-    const fetchCandidates = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem("jwt");
+  const fetchCandidates = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("jwt");
       const url = new URL(`https://app.elevatehr.ai/wp-json/elevatehr/v1/all-job-applications`);
       url.searchParams.append('stage', getStageValue(primaryTabValue));
       url.searchParams.append('page', page.toString());
       url.searchParams.append('per_page', perPage.toString());
 
       const response = await fetch(url.toString(), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            cache: 'no-store'
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        cache: 'no-store'
       });
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch candidates: ${response.status}`);
-        }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch candidates: ${response.status}`);
+      }
 
-        const data = await response.json();
-        setCandidates(data);
-        setFilteredCandidates(data);
+      const data = await response.json();
+      setCandidates(data);
+      setFilteredCandidates(data);
       setTotalPages(data.total_pages);
       setTotalItems(data.total);
-        setLoading(false);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError('Failed to fetch candidates');
-        }
-        setLoading(false);
+      setLoading(false);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to fetch candidates');
       }
-    };
+      setLoading(false);
+    }
+  };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
   };
 
   useEffect(() => {
-      fetchCandidates();
+    fetchCandidates();
   }, [primaryTabValue, page]);
 
   const getStageValue = (tabValue: number): StageType => {
@@ -623,9 +623,9 @@ export default function Home() {
     }
   };
 
-  const handleUpdateStagesWrapper = (stage: string, entries: number[]) => {
-    handleUpdateStages({ stage: stage as StageType, entries });
-  };
+  // const handleUpdateStagesWrapper = (stage: string, entries: number[]) => {
+  //   handleUpdateStages({ stage: stage as StageType, entries });
+  // };
 
   return (
     <Box
@@ -663,6 +663,7 @@ export default function Home() {
 
         <Stack direction="row" gap={3}>
           <Box sx={{
+            height: '100vh',
             width: 300,
             flexShrink: 0,
             display: { xs: 'none', lg: 'block' }
@@ -1096,7 +1097,7 @@ export default function Home() {
                         }
                       }}
                     />
-                    <Box sx={{ 
+                    <Box sx={{
                       display: 'flex',
                       bgcolor: 'rgba(17, 17, 17, 0.04)',
                       borderRadius: '12px',
@@ -1112,7 +1113,7 @@ export default function Home() {
                           '& .MuiTabs-indicator': {
                             display: 'none',
                           },
-                         
+
                           '& .MuiTab-root': {
                             minHeight: '40px',
                             minWidth: '40px',
@@ -1130,23 +1131,23 @@ export default function Home() {
                               color: theme.palette.primary.main,
                               transform: 'scale(1.05)',
                             },
-                           
+
                           }
                         }}
                       >
-                        <Tab 
+                        <Tab
                           sx={{
                             '&button .MuiTab-root': {
                               padding: '0px !important',
                               backgroundColor: 'red',
                             },
                           }}
-                          value="list" 
+                          value="list"
                           icon={<ViewListIcon />}
                           aria-label="list view"
                         />
-                        <Tab 
-                          value="grid" 
+                        <Tab
+                          value="grid"
                           icon={<GridViewIcon />}
                           aria-label="grid view"
                         />
@@ -1156,7 +1157,7 @@ export default function Home() {
                 </Box>
                 <Tabs
                   value={primaryTabValue}
-                  onChange={(e, newValue) => handlePrimaryTabChange(e,newValue)}
+                  onChange={(e, newValue) => handlePrimaryTabChange(e, newValue)}
                   indicatorColor="secondary"
                   variant="scrollable"
                   scrollButtons="auto"
@@ -1165,15 +1166,15 @@ export default function Home() {
                     width: "100%",
                     alignItems: "center",
                     '& .MuiButtonBase-root': {
-                        padding: '0px !important',
-                        // backgroundColor: 'rd',
-                      },
+                      padding: '0px !important',
+                      // backgroundColor: 'rd',
+                    },
                     '& .MuiTab-root': {
                       transition: 'all 0.2s ease-in-out',
                       '&:hover': {
                         color: theme.palette.secondary.main,
                       },
-                      
+
                     }
                   }}
                 >
@@ -1341,63 +1342,9 @@ export default function Home() {
                 backgroundColor: "transparent !important",
               }}
             >
-              {/* Actions bar inside Paper, before candidates list */}
-              {selectedEntries?.length > 0 &&
-                subTabValue !== 3 && ( // Hide for acceptance phase
-                  <Box
-                    sx={{
-                      backgroundColor: "white",
-                      padding: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                        p: 2,
-                      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-                      
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1" color={theme.palette.grey[100]}>
-                        {selectedEntries?.length} candidates selected
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => setSelectedEntries([])}
-                        sx={{ ml: 1 }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                      {PHASE_OPTIONS[getStageValue(subTabValue)]?.map((option) => (
-                        <Button
-                          key={option.action}
-                          variant="outlined"
-                          startIcon={isMovingStage === option.action ? <CircularProgress size={20} /> : <option.icon />}
-                          onClick={() => handleUpdateStagesWrapper(option.action, selectedEntries)}
-                          disabled={isMovingStage.length > 0}
-                          sx={{
-                            color: 'rgba(17, 17, 17, 0.84)',
-                            borderColor: 'rgba(17, 17, 17, 0.12)',
-                            '&:hover': {
-                              borderColor: 'rgba(17, 17, 17, 0.24)',
-                            },
-                            '&.Mui-disabled': {
-                              backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                              color: 'rgba(0, 0, 0, 0.26)'
-                            }
-                          }}
-                        >
-                          {isMovingStage ? 'Moving...' : option.label}
-                        </Button>
-                      ))}
-                    </Box>
-                  </Box>
-                )}
 
               {/* Grid View */}
-              <Box sx={{ 
+              <Box sx={{
                 display: { xs: 'block', md: viewMode === 'grid' ? 'block' : 'none' },
                 width: '100%',
                 height: '100%',
@@ -1440,12 +1387,12 @@ export default function Home() {
                               }}
                             />
                             <Box>
-                              <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 600, color: 'rgba(17, 17, 17, 0.92)',textTransform: 'capitalize'}}>
+                              <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 600, color: 'rgba(17, 17, 17, 0.92)', textTransform: 'capitalize' }}>
                                 {candidate.personal_info.firstname} {candidate.personal_info.lastname}
                               </Typography>
-                             
+
                             </Box>
-                              </Box>
+                          </Box>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 2.5 } }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1571,36 +1518,56 @@ export default function Home() {
               <Box sx={{
                 display: { xs: 'none', md: viewMode === 'list' ? 'block' : 'none' },
                 width: '100%',
-                height: '100%',
-                overflow: 'auto'
+                height: 'calc(100vh - 325px)',
+                overflowY: 'scroll',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#032B4420 transparent',
+                '&::-webkit-scrollbar': {
+                  height: '4px',
+                  width: '4px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#032B44',
+                  width: '4px',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    background: 'rgba(68, 68, 226, 0.3)',
+                  },
+                },
               }}>
                 {filteredCandidates?.applications?.map((candidate) => (
-                                      <Box
-                                      key={candidate.id}
-                                      sx={{
-                                              backgroundColor: 'white',
-                                        borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-                                        "&:last-child": {
-                                          borderBottom: "none",
-                                        },
-                                              // p: 2,
-                                      }}
-                                    >
-                  <CandidateListSection
+                  <Box
                     key={candidate.id}
-                    candidate={candidate}
-                    isSelected={selectedEntries.includes(candidate.id)}
-                    onSelectCandidate={handleSelectCandidate}
-                    selectedEntries={selectedEntries}
-                    onUpdateStages={handleUpdateStagesWrapper}
-                    currentStage={getStageValue(subTabValue)}
-                    onNotification={(message, severity) => {
-                      setNotificationMessage(message);
-                      setNotificationSeverity(severity);
-                      setIsOpen(true);
+                    sx={{
+                      backgroundColor: 'white',
+                      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+                      "&:last-child": {
+                        borderBottom: "none",
+                      },
+                      // p: 2,
                     }}
-                    phaseOptions={PHASE_OPTIONS}
-                  />
+                  >
+                    <CandidateListSection
+                      setSelectedEntries={setSelectedEntries}
+                      isQuickActionsVisible={false}
+                      isCheckboxVisible={false}
+                      key={candidate.id}
+                      candidate={candidate}
+                      isSelected={selectedEntries.includes(candidate.id)}
+                      onSelectCandidate={handleSelectCandidate}
+                      selectedEntries={selectedEntries}
+                      onUpdateStages={(action: string) => { console.log("action", action) }}
+                      currentStage={getStageValue(subTabValue)}
+                      onNotification={(message, severity) => {
+                        setNotificationMessage(message);
+                        setNotificationSeverity(severity);
+                        setIsOpen(true);
+                      }}
+                      phaseOptions={PHASE_OPTIONS}
+                    />
                   </Box>
                 ))}
               </Box>
@@ -1633,10 +1600,10 @@ export default function Home() {
             }}
           />
         </Box>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          align="center" 
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align="center"
           sx={{ mb: 3 }}
         >
           Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, totalItems)} of {totalItems} entries

@@ -1116,7 +1116,7 @@ export default function Home() {
               onClose={handleFilterMenuClose}
               sx={{ bgcolor: '#FFFFFF', p: 2 }}
             />
-            <Box sx={{ flex: 1, width: '80%' }}>
+            <Box sx={{ flex: 1, width: '80%', py:0, bg:"#ffffff" }}>
               {/* Your existing tabs */}
               <Box
                 sx={{
@@ -1358,7 +1358,7 @@ export default function Home() {
                   bgcolor: "transparent",
                   borderRadius: 2,
                   position: "relative",
-                  height: `calc(100vh - 273px)`,
+                  height: `calc(100vh - 200px)`,
                 }}
               >
                 {/* Actions bar inside Paper, before candidates list */}
@@ -1577,6 +1577,23 @@ export default function Home() {
                         pt: 0,
                         pb: 2,
                         display: { xs: "none", lg: "block" },
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#032B4420 transparent',
+                        '&::-webkit-scrollbar': {
+                          height: '4px',
+                          width: '4px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                          background: 'transparent',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          background: '#032B44',
+                          width: '4px',
+                          borderRadius: '4px',
+                          '&:hover': {
+                            background: 'rgba(68, 68, 226, 0.3)',
+                          },
+                        },
                       }}
                     >
                       {filteredCandidates?.applications?.map((candidate) => (
@@ -1592,6 +1609,8 @@ export default function Home() {
                           }}
                         >
                           <CandidateListSection
+                            isQuickActionsVisible={true}
+                            isCheckboxVisible={true}
                             candidate={candidate}
                             isSelected={selectedEntries?.includes(candidate.id)}
                             onSelectCandidate={handleSelectCandidate}
