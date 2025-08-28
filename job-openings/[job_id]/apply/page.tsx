@@ -24,7 +24,10 @@ import {
   DialogActions,
   Grow,
   IconButton,
+  Autocomplete,
+  Chip,
 } from "@mui/material";
+import { createFilterOptions } from "@mui/material/Autocomplete";
 import { styled } from "@mui/material/styles";
 import { Form, FormField } from "@/app/dashboard/components/ui/form";
 import { formSchema, type Inputs } from "@/app/lib/schema";
@@ -118,6 +121,27 @@ export default function Typeform({
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Predefined skills for the multi-select dropdown
+  const predefinedSkills: string[] = [
+    // Soft Skills
+    "Communication",
+    "Teamwork",
+    "Leadership",
+    "Problem Solving",
+    "Time Management",
+    // Technical Skills
+    "React",
+    "Node.js",
+    "Python",
+    "AutoCAD",
+    "Data Analysis",
+    "Cloud Computing",
+    "Excel",
+    "Welding",
+  ];
+
+  const filter = createFilterOptions<string>();
 
   const handleFileChange = (fieldKey: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -251,7 +275,12 @@ export default function Typeform({
             if (value instanceof File) {
               formData.append(key, value);
             } else if (Array.isArray(value)) {
-              formData.append(key, JSON.stringify(value));
+              // Serialize skills as comma-separated values; other arrays as JSON
+              if (key === 'skills') {
+                formData.append(key, (value as unknown[]).map(v => String(v)).join(', '));
+              } else {
+                formData.append(key, JSON.stringify(value));
+              }
             } else {
               formData.append(key, String(value));
             }
@@ -270,6 +299,9 @@ export default function Typeform({
 
         // Log the form data for debugging
         console.log('Form values:', formValues);
+        if (formValues.skills) {
+          console.log('Skills (payload):', Array.isArray(formValues.skills) ? formValues.skills.join(', ') : formValues.skills);
+        }
         console.log('Assessment IDs:', formValues.assessment_ids);
 
         const response = await fetch(
@@ -645,6 +677,74 @@ export default function Typeform({
                             }
                           }}
                         />
+                      ) : currentField.key === 'skills' ? (
+                        <Box>
+                          <Autocomplete
+                            multiple
+                            freeSolo
+                            options={predefinedSkills}
+                            filterOptions={(options, params) => {
+                              const filtered = filter(options, params);
+                              if (
+                                params.inputValue &&
+                                !filtered.some(
+                                  (opt) => opt.toLowerCase() === params.inputValue.toLowerCase()
+                                )
+                              ) {
+                                filtered.push(params.inputValue);
+                              }
+                              return filtered;
+                            }}
+                            value={Array.isArray(field.value) ? field.value : (typeof field.value === 'string' && field.value ? field.value.split(',').map(v => v.trim()).filter(Boolean) : [])}
+                            onChange={(e, newValue) => {
+                              const unique = Array.from(new Set(newValue.map(v => (typeof v === 'string' ? v : String(v)))));
+                              field.onChange(unique);
+                            }}
+                            renderTags={(value: readonly string[], getTagProps) =>
+                              value.map((option: string, index: number) => (
+                                <Chip
+                                  variant="outlined"
+                                  label={option}
+                                  {...getTagProps({ index })}
+                                  key={`${option}-${index}`}
+                                />
+                              ))
+                            }
+                            renderInput={(params) => (
+                              <StyledTextField
+                                {...params}
+                                placeholder={currentField.placeholder || 'Type or select skills...'}
+                                error={!!error}
+                              />
+                            )}
+                            sx={{
+                              backgroundColor: '#F8F9FB',
+                              borderRadius: '8px',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'transparent',
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'transparent',
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'primary.main',
+                              },
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 1 }}
+                          >
+                            Type or select one skill at a time, then press Enter or select from the dropdown to add it.
+                          </Typography>
+                          {/* Hidden input as comma-separated string */}
+                          <input
+                            type="hidden"
+                            value={(Array.isArray(field.value) ? field.value : (typeof field.value === 'string' ? field.value.split(',').map(v => v.trim()).filter(Boolean) : [])).join(', ')}
+                            readOnly
+                          />
+                        </Box>
                       ) : (
                         <StyledTextField
                           {...field}

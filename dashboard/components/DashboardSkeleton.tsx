@@ -30,7 +30,7 @@ const DashboardSkeleton = () => {
   const statCards = [1, 2, 3, 4, 5, 6];
   
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', background: '#F3F4F7', minHeight: '100vh', padding: '40px 24px' }}>
+    <Box sx={{ overflow: 'hidden', display: 'flex', justifyContent: 'center', width: '100%', background: '#F3F4F7', minHeight: '100vh', padding: '40px 24px' }}>
       <Box sx={{ maxWidth: '1440px', width: '100%' }}>
         {/* Header Skeleton */}
         <Box sx={{ mb: 3, mt: "40px" }}>
@@ -57,7 +57,7 @@ const DashboardSkeleton = () => {
         <Grid container spacing={4}>
           {/* Main Panel */}
           <Grid item xs={12} lg={8}>
-            <Box sx={{ background: '#FFFFFF', borderRadius: '10px', p: 3, height: '700px', overflow: 'scroll' }}>
+            <Box sx={{ background: '#FFFFFF', borderRadius: '10px', p: 3, height: '700px', overflow: 'hidden' }}>
               <Box sx={{ mb: 2 }}>
                 <Skeleton variant="text" width={200} height={32} />
               </Box>
@@ -70,7 +70,7 @@ const DashboardSkeleton = () => {
 
           {/* Side Panel */}
           <Grid container item spacing={4} xs={12} lg={4}>
-            <Grid item xs={12} sm={6} lg={12} sx={{ flex: 1, maxHeight: '50%', overflow: 'scroll' }}>
+            <Grid item xs={12} sm={6} lg={12} sx={{ flex: 1, maxHeight: '50%', overflow: 'hidden' }}>
               <Box sx={{ background: '#FFFFFF', borderRadius: '10px', p: 3, height: '340px' }}>
                 <Box sx={{ mb: 2 }}>
                   <Skeleton variant="text" width={150} height={32} />
@@ -80,7 +80,7 @@ const DashboardSkeleton = () => {
                 ))}
               </Box>
             </Grid>
-            <Grid item xs={12} sm={6} lg={12} sx={{ flex: 1, maxHeight: '50%', overflow: 'scroll' }}>
+            <Grid item xs={12} sm={6} lg={12} sx={{ flex: 1, maxHeight: '50%', overflow: 'hidden' }}>
               <Box sx={{ background: '#FFFFFF', borderRadius: '10px', p: 3, height: '340px' }}>
                 <Box sx={{ mb: 2 }}>
                   <Skeleton variant="text" width={150} height={32} />

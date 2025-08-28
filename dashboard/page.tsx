@@ -244,7 +244,10 @@ const StatCard = ({ card, index, length }: StatCardProps) => {
       onClick={handleClick}
       sx={{
         cursor: (card.id === 'active_jobs' || card.id === 'total_applicants') ? 'pointer' : 'default',
-        flex: 1
+        minWidth: '200px',
+        flex: 1,
+        flexShrink: 0,
+        flexGrow: 1,
       }}
     >
       <DashboardCard
@@ -619,7 +622,7 @@ const Dashboard = () => {
             },
           }
         );
-        console.log(res, res.ok);
+        
         if (!res.ok) throw new Error("Failed to fetch assessments");
         const data = await res.json();
         setAssessments(data.assessments);
@@ -860,11 +863,12 @@ const Dashboard = () => {
       </Paper>
 
       <Box>
-        <Grid container>
-          <Grid container xs={12} spacing={3} padding={0} sx={{ margin: 0, marginBottom: 3, alignItems: 'stretch' }}>
-            <Grid item xs={8} sx={{
+        {/* <Grid container> */}
+          <Stack direction={{xs: 'column', lg: 'row'}} spacing={2}  padding={0} sx={{ margin: 0, marginBottom: 3, alignItems: 'stretch' }}>
+            <Box sx={{
+              flex: 1,
               margin: 0,
-              overflowX: 'scroll',
+              overflowX: 'hidden',
               height: '300px',
               '&::-webkit-scrollbar': {
                 display: 'none'
@@ -889,7 +893,9 @@ const Dashboard = () => {
               >
                 Your Stats
               </Typography>
-              <Stack direction={'row'} spacing={3} flexWrap={'nowrap'} sx={{ padding: 0, margin: 0 }}>
+              <Stack direction={'row'} gap={3}  flexWrap={'nowrap'} sx={{ padding: 0, margin: 0 , width: '100%', overflowX: 'scroll','&::-webkit-scrollbar': {
+                display: 'none'
+              }, }}>
                 {statistics.map((card, index) => {
                   if (card.id === 'assessments') {
                     return <StatCard key={index} card={{ ...card, value: assessments.length }} index={index} length={statistics.length} />
@@ -897,18 +903,29 @@ const Dashboard = () => {
                   return <StatCard key={index} card={card} index={index} length={statistics.length} />
                 })}
               </Stack>
-            </Grid>
-            <Grid item xs={4} paddingTop={0} sx={{ paddingTop: "0 !important" }}>
+            </Box>
+            <Box sx={{
+              maxWidth: {xs: '100%', lg: '400px'},
+              width: '100%',
+              flex: 1,
+              margin: 0,
+              overflowX: 'hidden',
+              height: '300px',
+              '&::-webkit-scrollbar': {
+                display: 'none'
+              },
+            }}>
               <Notifications
                 notifications={notifications.slice(0, 20)}
                 loading={notificationsLoading}
                 error={notificationsError}
                 customStyle={{ height: '300px' }}
               />
-            </Grid>
-          </Grid>
-          <Grid container xs={12} spacing={3} padding={0} sx={{ margin: 0, marginBottom: 3, alignItems: 'stretch' }}>
-            <Grid item xs={8} sx={{
+            </Box>
+          </Stack>
+          <Stack direction={{xs: 'column', lg: 'row'}} gap={2} padding={0} sx={{ margin: 0, marginBottom: 3, alignItems: 'stretch' }}>
+            <Box sx={{
+              flex: 1,
               margin: 0,
               overflowX: 'scroll',
               height: '612px',
@@ -928,29 +945,38 @@ const Dashboard = () => {
                 isLoading={false}
                 handleOpen={handleOpen}
               />
-            </Grid>
+            </Box>
 
-            <Grid container item xs={4} spacing={3} height={'612px'} width={'100%'}>
-              <Grid item xs={12} paddingTop={0} sx={{ paddingTop: "0 !important" }}>
+            <Stack direction={'column'} gap={2} sx={{
+              maxWidth: {xs: '100%', lg: '400px'},
+              width: '100%',
+              flex: 1,
+              margin: 0,
+              overflowX: 'hidden',
+              height: '612px',
+              '&::-webkit-scrollbar': {
+                display: 'none'
+              },
+            }}>
                 <Assessment
                   customStyle={{ height: '100%' }}
                   assessments={assessments.slice(0, 5)}
                   loading={loading}
                   error={calendlyError}
                 />
-              </Grid>
-              <Grid item xs={12} md={6} lg={12} flex={1} height={'50%'}>
+              {/* </Box> */}
+              {/* <Box item xs={12} md={6} lg={12} flex={1} height={'50%'}> */}
                 <EmailTemplates
                   customStyle={{ height: '100%' }}
                   templates={emailTemplates}
                   loading={false}
                   error={emailTemplatesError}
                 />
-              </Grid>
-            </Grid>
-          </Grid>
+              {/* </Box> */}
+            </Stack>
+          </Stack>
 
-        </Grid>
+        {/* </Grid> */}
       </Box>
       <StyledDialog open={open} onClose={handleClose}>
         <DialogTitle sx={{ padding: 0 }}>

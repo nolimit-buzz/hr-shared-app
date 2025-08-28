@@ -141,47 +141,46 @@ export default function Home() {
   const getJobId = useCallback((): string => {
     return params["job_id"] as string;
   }, [params]);
+  const fetchJobDetails = async () => {
+    if (!params["job_id"]) return; // Guard against undefined job_id
 
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("jwt");
+      const jobId = params["job_id"] as string;
+      const response = await fetch(
+        `https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${jobId}?sort_by=match_score&sort_order=desc`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        }
+      );
+
+      handleApiError(response);
+
+      const data = await response.json();
+      // console.log("Job details received:", data);
+      setJobDetails(data);
+      setLoading(false);
+      // Set stage totals from job details
+      if (data.stage_counts) {
+        setStageTotals(data.stage_counts);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Failed to fetch job details");
+      }
+      setLoading(false);
+    }
+  };
   // Fetch job details
   useEffect(() => {
-    const fetchJobDetails = async () => {
-      if (!params["job_id"]) return; // Guard against undefined job_id
-
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem("jwt");
-        const jobId = params["job_id"] as string;
-        const response = await fetch(
-          `https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${jobId}?sort_by=match_score&sort_order=desc`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            cache: "no-store",
-          }
-        );
-
-        handleApiError(response);
-
-        const data = await response.json();
-        console.log("Job details received:", data);
-        setJobDetails(data);
-        setLoading(false);
-        // Set stage totals from job details
-        if (data.stage_counts) {
-          setStageTotals(data.stage_counts);
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError("Failed to fetch job details");
-        }
-        setLoading(false);
-      }
-    };
 
     fetchJobDetails();
   }, [params["job_id"]]); // Direct dependency on params["job_id"]
@@ -205,19 +204,19 @@ export default function Home() {
       url.searchParams.append('per_page', perPage.toString());
 
       // Add logging for debugging
-      console.log('Selected Assessment Type:', selectedAssessmentType);
-      console.log('Assessments:', assessments);
+      // console.log('Selected Assessment Type:', selectedAssessmentType);
+      // console.log('Assessments:', assessments);
 
       if (subTabValue !== 0 && getStageValue(subTabValue) === 'skill_assessment' && selectedAssessmentType > 0) {
         // Subtract 1 because index 0 is "All" tab
         const assessmentType = assessments[selectedAssessmentType - 1]?.type;
-        console.log('Assessment Type to be added:', assessmentType);
+        // console.log('Assessment Type to be added:', assessmentType);
         if (assessmentType) {
           url.searchParams.append('assessment_type', assessmentType);
         }
       }
 
-      console.log('Final URL:', url.toString());
+      // console.log('Final URL:', url.toString());
       const response = await fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -226,7 +225,7 @@ export default function Home() {
         cache: "no-store",
       });
 
-              handleApiError(response);
+      handleApiError(response);
 
       const data = await response.json();
       setCandidates(data);
@@ -255,7 +254,7 @@ export default function Home() {
   }, [fetchCandidates, primaryTabValue]);
 
   useEffect(() => {
-    console.log("Job details received:", jobDetails);
+    // console.log("Job details received:", jobDetails);
     const loadSkills = async () => {
       if (jobDetails) {
         const skills = await getSkillsForRole(
@@ -473,34 +472,36 @@ export default function Home() {
         throw new Error("No authentication token found");
       }
 
-      if (stage.startsWith('assessment_')) {
-        // Handle assessment sending
-        const assessmentId = dynamicPhaseOptions[getStageValue(subTabValue)]
-          .find(option => option.action === stage)?.id;
+      // if (stage.startsWith('assessment_')) {
+      //   console.log("running starts with assessment")
+      //   // Handle assessment sending
+      //   const assessmentId = dynamicPhaseOptions[getStageValue(subTabValue)]
+      //     .find(option => option.action === stage)?.id;
 
-        if (!assessmentId) {
-          throw new Error('Assessment ID not found');
-        }
+      //   if (!assessmentId) {
+      //     throw new Error('Assessment ID not found');
+      //   }
 
-        const response = await fetch(
-          'https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/send-job-assessment',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              application_ids: entries,
-              assessment_id: assessmentId
-            })
-          }
-        );
+      //   const response = await fetch(
+      //     'https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/send-job-assessment',
+      //     {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //         Authorization: `Bearer ${token}`,
+      //       },
+      //       body: JSON.stringify({
+      //         application_ids: entries,
+      //         assessment_id: assessmentId
+      //       })
+      //     }
+      //   );
 
-        handleApiError(response);
+      //   handleApiError(response);
 
-        handleNotification('Assessment sent successfully', 'success');
-      } else {
+      //   handleNotification('Assessment sent successfully', 'success');
+      // } else {
+        console.log("running regular stage update")
         // Handle regular stage update
         const response = await fetch(
           "https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/move-stage",
@@ -519,13 +520,15 @@ export default function Home() {
 
         handleApiError(response);
 
+
         handleNotification(
           `Successfully moved ${entries.length} candidate${entries.length > 1 ? "s" : ""
           } to ${stage.replace("_", " ")}`,
           "success"
         );
-      }
-
+      // }
+      console.log("fetching job details")
+      fetchJobDetails();
       // Refresh the candidates list
       fetchCandidates();
     } catch (error) {
@@ -594,15 +597,23 @@ export default function Home() {
     ]
   ), []);
 
-  // Bulk email modal state
-  const [bulkEmailOpen, setBulkEmailOpen] = useState(false);
-  const [bulkEmailLoading, setBulkEmailLoading] = useState(false);
-  const [bulkEmailContent, setBulkEmailContent] = useState("");
-  const [bulkEmailError, setBulkEmailError] = useState("");
-  const [bulkPendingAction, setBulkPendingAction] = useState<string | null>(null);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailContent, setEmailContent] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [emailTemplates, setEmailTemplates] = useState<any | null>(null);
 
   const mapActionToTemplateKey = (action: string): string | null => {
     switch (action) {
+      case "skill_assessment":
+        return "skill_assessment";
+      case "technical_assessment":
+        return "technical_assessment";
+      case "online_assessment_1":
+        return "online_assessment_1";
+      case "online_assessment_2":
+        return "online_assessment_2";
       case "interviews":
         return "interview_booking";
       case "acceptance":
@@ -614,44 +625,50 @@ export default function Home() {
     }
   };
 
-  const openBulkEmailModalForAction = async (action: string) => {
+  const openEmailModalForAction = async (action: string) => {
     try {
-      setBulkPendingAction(action);
-      setBulkEmailLoading(true);
-      setBulkEmailError("");
-      setBulkEmailContent("");
-      const token = localStorage.getItem("jwt");
-      if (!token) throw new Error("Authentication token not found");
-      const response = await fetch(
-        "https://app.elevatehr.ai/wp-json/elevatehr/v1/email-templates",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
+      setPendingAction(action);
+      setEmailLoading(true);
+      setEmailError("");
+      setEmailContent("");
+      // Use cached templates if available; otherwise fetch once and cache
+      let data = emailTemplates;
+      if (!data) {
+        const token = localStorage.getItem("jwt");
+        if (!token) throw new Error("Authentication token not found");
+        const response = await fetch(
+          "https://app.elevatehr.ai/wp-json/elevatehr/v1/email-templates",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            cache: "no-store",
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch email templates");
         }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch email templates");
+        data = await response.json();
+        setEmailTemplates(data);
       }
-      const data = await response.json();
+      console.log("data", data, action);
       const key = mapActionToTemplateKey(action);
       const content = key && data?.templates?.[key]?.content ? data.templates[key].content : "";
-      setBulkEmailContent(content);
-      setBulkEmailOpen(true);
+      setEmailContent(content);
+      setEmailModalOpen(true);
     } catch (err) {
-      setBulkEmailError(err instanceof Error ? err.message : "Failed to load templates");
-      setNotification({ open: true, message: bulkEmailError || "Failed to load templates", severity: "error" });
+      setEmailError(err instanceof Error ? err.message : "Failed to load templates");
+      setNotification({ open: true, message: emailError || "Failed to load templates", severity: "error" });
     } finally {
-      setBulkEmailLoading(false);
+      setEmailLoading(false);
     }
   };
 
   const handleSendBulkEmailAndMoveStage = async () => {
-    if (!bulkPendingAction || !selectedEntries || selectedEntries.length === 0) return;
+    if (!pendingAction || !selectedEntries || selectedEntries.length === 0) return;
     try {
-      setBulkEmailLoading(true);
+      setEmailLoading(true);
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Authentication token not found");
       const response = await fetch(
@@ -664,8 +681,8 @@ export default function Home() {
           },
           body: JSON.stringify({
             entries: selectedEntries,
-            stage: bulkPendingAction,
-            custom_email_template: bulkEmailContent,
+            stage: pendingAction,
+            custom_email_template: emailContent,
           }),
         }
       );
@@ -673,16 +690,17 @@ export default function Home() {
         const errText = await response.text();
         throw new Error(errText || "Failed to update stage with email");
       }
-      setNotification({ open: true, message: `Email sent and ${selectedEntries.length} candidate(s) moved to '${bulkPendingAction.replace("_", " ")}'`, severity: "success" });
-      setBulkEmailOpen(false);
-      setBulkPendingAction(null);
+      setNotification({ open: true, message: `Email sent and ${selectedEntries.length} candidate(s) moved to '${pendingAction.replace("_", " ")}'`, severity: "success" });
+      setEmailModalOpen(false);
+      setPendingAction(null);
       setSelectedEntries([]);
       // Refresh list
+      fetchJobDetails();
       fetchCandidates();
     } catch (err) {
       setNotification({ open: true, message: err instanceof Error ? err.message : "Failed to send email", severity: "error" });
     } finally {
-      setBulkEmailLoading(false);
+      setEmailLoading(false);
     }
   };
 
@@ -803,10 +821,10 @@ export default function Home() {
       }
 
       const data = await response.json();
-      console.log('Raw assessment data:', data);
+      // console.log('Raw assessment data:', data);
       if (data.status === "success" && Array.isArray(data.assessments)) {
         setAssessments(data.assessments);
-        console.log('Assessments set:', data.assessments);
+        // console.log('Assessments set:', data.assessments);
 
         // Update dynamic phase options with assessment options
         const assessmentOptions = data.assessments.map((assessment: Assessment) => ({
@@ -814,12 +832,12 @@ export default function Home() {
             word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ')}`,
           icon: AssessmentIcon,
-          action: `assessment_${assessment.type}`,
+          action: assessment.type,
           id: assessment.id
         }));
 
-        console.log('Assessment Options:', assessmentOptions);
-        console.log('Original PHASE_OPTIONS:', PHASE_OPTIONS);
+        // console.log('Assessment Options:', assessmentOptions);
+        // console.log('Original PHASE_OPTIONS:', PHASE_OPTIONS);
 
         setDynamicPhaseOptions(prev => {
           const newOptions = {
@@ -829,7 +847,7 @@ export default function Home() {
               ...assessmentOptions
             ]
           };
-          console.log('New Dynamic Phase Options:', newOptions);
+          // console.log('New Dynamic Phase Options:', newOptions);
           return newOptions;
         });
       } else {
@@ -877,6 +895,7 @@ export default function Home() {
           flexDirection: 'column',
           gap: 2,
           height: 240,
+          overflow: 'hidden',
         }}
       >
         <Skeleton variant="text" width="80%" height={32} sx={{ mb: 1 }} />
@@ -1071,7 +1090,7 @@ export default function Home() {
         </Box>
 
         {primaryTabValue === 0 ? (
-          <Stack direction="row" gap={3}>
+          <Stack direction="row" maxWidth={'100%'} gap={3}>
             <Box sx={{ display: { xs: "none", lg: "block" }, width: 308 }}>
               <FilterSection
                 filters={filters}
@@ -1097,7 +1116,7 @@ export default function Home() {
               onClose={handleFilterMenuClose}
               sx={{ bgcolor: '#FFFFFF', p: 2 }}
             />
-            <Box sx={{ flexGrow: 1 }}>
+            <Box sx={{ flex: 1, width: '80%' }}>
               {/* Your existing tabs */}
               <Box
                 sx={{
@@ -1124,7 +1143,7 @@ export default function Home() {
                     scrollButtons="auto"
                     aria-label="submission tabs"
                     sx={{
-                      width: "100%",
+                      // width: "100%",
                       alignItems: "center",
                       "& .MuiTab-root": {
                         transition: "all 0.2s ease-in-out",
@@ -1340,7 +1359,6 @@ export default function Home() {
                   borderRadius: 2,
                   position: "relative",
                   height: `calc(100vh - 273px)`,
-                  overflow: "hidden",
                 }}
               >
                 {/* Actions bar inside Paper, before candidates list */}
@@ -1352,11 +1370,11 @@ export default function Home() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     py: 2,
-                   
+
                   }}
                 >
                   {/* Select All control */}
-                 {filteredCandidates?.applications?.length > 1 && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {filteredCandidates?.applications?.length > 1 && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box
                       sx={{
                         // borderBottom: {
@@ -1434,13 +1452,13 @@ export default function Home() {
                     subTabValue !== 4 && (
                       <Box sx={{ display: "flex", gap: 2 }}>
                         {(() => {
-                          console.log('Current stage:', getStageValue(subTabValue));
-                          console.log('Available options:', dynamicPhaseOptions[getStageValue(subTabValue)]);
+                          // console.log('Current stage:', getStageValue(subTabValue));
+                          // console.log('Available options:', dynamicPhaseOptions[getStageValue(subTabValue)]);
                           return null;
                         })()}
                         {dynamicPhaseOptions[getStageValue(subTabValue)]?.map(
                           (option) => {
-                            console.log('Rendering option:', option);
+                            // console.log('Rendering option:', option);
                             return (
                               <Button
                                 key={option.action}
@@ -1452,18 +1470,18 @@ export default function Home() {
                                     <option.icon />
                                   )
                                 }
-                                onClick={async () => {
-                                  const emailStages = ["interviews", "acceptance", "archived"];
-                                  if (emailStages.includes(option.action)) {
-                                    await openBulkEmailModalForAction(option.action);
-                                  } else {
-                                    handleUpdateStages({
-                                      stage: option.action as StageType,
-                                      assessmentType: option.action.startsWith('assessment_')
-                                        ? option.action.replace('assessment_', '')
-                                        : undefined
-                                    });
-                                  }
+                                onClick={ () => {
+                                  // const emailStages = ["interviews", "acceptance", "archived"];
+                                  // if (emailStages.includes(option.action)) {
+                                   openEmailModalForAction(option.action);
+                                  // } else {
+                                  //   handleUpdateStages({
+                                  //     stage: option.action as StageType,
+                                  //     assessmentType: option.action.startsWith('assessment_')
+                                  //       ? option.action.replace('assessment_', '')
+                                  //       : undefined
+                                  //   });
+                                  // }
                                 }}
                                 disabled={isMovingStage.length > 0}
                                 sx={{
@@ -1492,13 +1510,13 @@ export default function Home() {
                 {subTabValue === 2 && (
                   <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                     {(() => {
-                      console.log('Rendering assessment tabs with:', { selectedAssessmentType, assessments });
+                      // console.log('Rendering assessment tabs with:', { selectedAssessmentType, assessments });
                       return null;
                     })()}
                     <Tabs
                       value={selectedAssessmentType}
                       onChange={(_, newValue) => {
-                        console.log('Tab changed to:', newValue);
+                        // console.log('Tab changed to:', newValue);
                         setSelectedAssessmentType(newValue);
                       }}
                       aria-label="skill assessment tabs"
@@ -1550,9 +1568,11 @@ export default function Home() {
 
                     {/* Desktop View */}
                     <Box
-                      className="thin-scrollbar"
                       sx={{
-                        // height: "max-content",
+                        maxWidth: '100%',
+                        width: '100%',
+                        height: "100%",
+                        overflowX: "hidden",
                         overflowY: "auto",
                         pt: 0,
                         pb: 2,
@@ -1561,6 +1581,7 @@ export default function Home() {
                     >
                       {filteredCandidates?.applications?.map((candidate) => (
                         <Box
+                          width={'100%'}
                           key={candidate.id}
                           sx={{
                             backgroundColor: "white",
@@ -1574,21 +1595,13 @@ export default function Home() {
                             candidate={candidate}
                             isSelected={selectedEntries?.includes(candidate.id)}
                             onSelectCandidate={handleSelectCandidate}
-                            onUpdateStages={(
-                              stage: string,
-                              entries: number[]
-                            ) =>
-                              handleUpdateStages({
-                                stage: stage as StageType,
-                                entries,
-                              })
-                            }
-                            disableSelection={
-                              subTabValue === 3 ||
-                              filteredCandidates?.applications?.length === 1
-                            }
+                            onUpdateStages={(action)=>openEmailModalForAction(action)}
+                            // disableSelection={
+                            //   filteredCandidates?.applications?.length === 1
+                            // }
                             currentStage={getStageValue(subTabValue)}
                             selectedEntries={selectedEntries}
+                            setSelectedEntries={setSelectedEntries}
                             onNotification={handleNotification}
                             phaseOptions={dynamicPhaseOptions}
                           />
@@ -1605,7 +1618,7 @@ export default function Home() {
                       getStageValue={getStageValue}
                       handleSelectCandidate={handleSelectCandidate}
                       handleCardClick={handleCardClick}
-                      handleUpdateStages={handleUpdateStages}
+                      handleUpdateStages={openEmailModalForAction}
                       getSkillChipColor={getSkillChipColor}
                       theme={theme}
                     />
@@ -1671,63 +1684,63 @@ export default function Home() {
               </Paper>
               {/* Bulk Email Modal */}
               <Dialog
-                open={bulkEmailOpen}
-                onClose={() => setBulkEmailOpen(false)}
+                open={emailModalOpen}
+                onClose={() => setEmailModalOpen(false)}
                 fullWidth
                 maxWidth="md"
               >
                 <DialogTitle sx={{ fontWeight: 600, color: "rgba(17, 17, 17, 0.92)" }}>
-                  {bulkPendingAction ? `Send email for ${bulkPendingAction.replace("_", " ")}` : "Send Email"}
+                  {pendingAction ? `Send email for ${pendingAction.replace("_", " ")}` : "Send Email"}
                 </DialogTitle>
                 <DialogContent dividers sx={{ bgcolor: theme.palette.background.paper }}>
-                  {bulkEmailLoading ? (
+                  {emailLoading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                       <CircularProgress />
                     </Box>
                   ) : (
-                    
-              <Box sx={{
-                '& .quill': {
-                  bgcolor: '#FFF',
-                  borderRadius: '8px',
-                  border: '0.8px solid rgba(17, 17, 17, 0.14)',
-                  transition: 'all 0.3s ease',
-                  '&:focus-within': {
-                    border: `0.8px solid ${theme.palette.primary.main}`,
-                    boxShadow: `0 0 0 1px ${theme.palette.primary.main}25`,
-                  },
-                  '& .ql-toolbar': {
-                    borderTopLeftRadius: '8px',
-                    borderTopRightRadius: '8px',
-                    border: 'none',
-                    borderBottom: '0.8px solid rgba(17, 17, 17, 0.14)',
-                  },
-                  '& .ql-container': {
-                    border: 'none',
-                    borderBottomLeftRadius: '8px',
-                    borderBottomRightRadius: '8px',
-                  }
-                }
-              }}>
+
+                    <Box sx={{
+                      '& .quill': {
+                        bgcolor: '#FFF',
+                        borderRadius: '8px',
+                        border: '0.8px solid rgba(17, 17, 17, 0.14)',
+                        transition: 'all 0.3s ease',
+                        '&:focus-within': {
+                          border: `0.8px solid ${theme.palette.primary.main}`,
+                          boxShadow: `0 0 0 1px ${theme.palette.primary.main}25`,
+                        },
+                        '& .ql-toolbar': {
+                          borderTopLeftRadius: '8px',
+                          borderTopRightRadius: '8px',
+                          border: 'none',
+                          borderBottom: '0.8px solid rgba(17, 17, 17, 0.14)',
+                        },
+                        '& .ql-container': {
+                          border: 'none',
+                          borderBottomLeftRadius: '8px',
+                          borderBottomRightRadius: '8px',
+                        }
+                      }
+                    }}>
                       {/* @ts-ignore - ReactQuill loaded dynamically */}
-                      <ReactQuill className="quill" theme="snow" value={bulkEmailContent} onChange={setBulkEmailContent} modules={quillModules} formats={quillFormats} />
+                      <ReactQuill className="quill" theme="snow" value={emailContent} onChange={setEmailContent} modules={quillModules} formats={quillFormats} />
                     </Box>
                   )}
-                  {bulkEmailError && (
-                    <Alert severity="error" sx={{ mt: 2 }}>{bulkEmailError}</Alert>
+                  {emailError && (
+                    <Alert severity="error" sx={{ mt: 2 }}>{emailError}</Alert>
                   )}
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
-                  <Button onClick={() => setBulkEmailOpen(false)} variant="outlined" color="primary">
+                  <Button onClick={() => setEmailModalOpen(false)} variant="outlined" color="primary">
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleSendBulkEmailAndMoveStage}
+                    onClick={async()=>await handleSendBulkEmailAndMoveStage()}
                     variant="contained"
                     color="secondary"
-                    disabled={bulkEmailLoading || !bulkEmailContent}
+                    disabled={emailLoading || !emailContent}
                   >
-                    {bulkEmailLoading ? <CircularProgress size={20} color="inherit" /> : 'Send'}
+                    {emailLoading ? <CircularProgress size={20} color="inherit" /> : 'Send'}
                   </Button>
                 </DialogActions>
               </Dialog>

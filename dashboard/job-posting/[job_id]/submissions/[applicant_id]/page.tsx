@@ -177,35 +177,35 @@ export default function ApplicantDetails() {
     setError(null);
     try {
       const token = localStorage.getItem("jwt");
-        if (!token) {
+      if (!token) {
         throw new Error("Authentication token not found");
-        }
+      }
 
-        const response = await fetch(
+      const response = await fetch(
         `https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/${applicantId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
-            },
+          },
           cache: "no-store",
-          }
-        );
+        }
+      );
       console.log(response);
-        
-        if (!response.ok) {
+
+      if (!response.ok) {
         throw new Error(
           `Failed to fetch applicant details: ${response.statusText}`
         );
-        }
+      }
 
       const data = await response.json();
-    
+
       console.log(data);
       setApplicant({
         ...data,
       });
-      } catch (error) {
+    } catch (error) {
       console.error("Error fetching applicant details:", error);
       setError(
         error instanceof Error
@@ -395,10 +395,10 @@ export default function ApplicantDetails() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Back button */}
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3  }}>
         <IconButton onClick={handleBack}>
-        <ArrowBackIcon />
-      </IconButton>
+          <ArrowBackIcon />
+        </IconButton>
         <Typography variant="h6" sx={{ color: "grey.100" }}>
           {applicant?.job_title || "Job Title"}
         </Typography>
@@ -406,13 +406,14 @@ export default function ApplicantDetails() {
       <Box
         sx={{
           display: "flex",
-        gap: 3,
-        minHeight: "100vh",
+          gap: 3,
+          minHeight: "100vh",
         }}
       >
         {/* Sidebar */}
         <Box
           sx={{
+            display: { xs: "none", lg: "block" },
             width: "30%",
             position: "sticky",
             top: "32px",
@@ -420,22 +421,42 @@ export default function ApplicantDetails() {
             alignSelf: "flex-start",
           }}
         >
-        <Paper 
-          elevation={0} 
-          sx={{ 
+          <Paper
+            elevation={0}
+            sx={{
               width: "100%",
               height: "70vh",
-            borderRadius: 2,
+              borderRadius: 2,
               bgcolor: "#fff",
-              overflow: "auto",
-          }}
-        >
-          <List sx={{ p: 0 }}>
-            {applicants.map((item) => (
-              <ListItem
-                key={item.id}
-                sx={{
-                  borderRadius:"8px",
+              overflowY: "auto",
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#032B4420 transparent',
+              '&::-webkit-scrollbar': {
+                height: '4px',
+                width: '4px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#032B44',
+                width: '4px',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: 'rgba(68, 68, 226, 0.3)',
+                },
+              },
+            }}
+          >
+            <List sx={{
+              textOverflow: 'wrap',
+              p: 0, overflowX: "hidden", 
+            }}>
+              {applicants.map((item) => (
+                <ListItem
+                  key={item.id}
+                  sx={{
+                    borderRadius: "8px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
@@ -465,11 +486,11 @@ export default function ApplicantDetails() {
                   onClick={() => {
                     fetchApplicantDetails(item.id);
                   }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: 600,
+                >
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: 600,
                       fontSize: "18px",
                       color:
                         item.id === applicant?.id
@@ -477,13 +498,13 @@ export default function ApplicantDetails() {
                           : "text.grey[100]",
                       mb: 1,
                       textTransform: "capitalize",
-                  }}
-                >
-                  {item.personal_info.firstname} {item.personal_info.lastname}
-                </Typography>
+                    }}
+                  >
+                    {item.personal_info.firstname} {item.personal_info.lastname}
+                  </Typography>
 
-                  <Stack spacing={1} width="100%" direction="row" flexWrap="wrap" gap={1}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Stack width="100%" direction="row" flexWrap="wrap" gap={1}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <svg
                         width="20"
                         height="20"
@@ -517,12 +538,12 @@ export default function ApplicantDetails() {
                         })}
                       </Typography>
                     </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 14.1699C9.87 14.1699 8.13 12.4399 8.13 10.2999C8.13 8.15994 9.87 6.43994 12 6.43994C14.13 6.43994 15.87 8.16994 15.87 10.3099C15.87 12.4499 14.13 14.1699 12 14.1699ZM12 7.93994C10.7 7.93994 9.63 8.99994 9.63 10.3099C9.63 11.6199 10.69 12.6799 12 12.6799C13.31 12.6799 14.37 11.6199 14.37 10.3099C14.37 8.99994 13.3 7.93994 12 7.93994Z" fill="#292D32"/>
-                        <path d="M12.0001 22.76C10.5201 22.76 9.03005 22.2 7.87005 21.09C4.92005 18.25 1.66005 13.72 2.89005 8.33C4.00005 3.44 8.27005 1.25 12.0001 1.25C12.0001 1.25 12.0001 1.25 12.0101 1.25C15.7401 1.25 20.0101 3.44 21.1201 8.34C22.3401 13.73 19.0801 18.25 16.1301 21.09C14.9701 22.2 13.4801 22.76 12.0001 22.76ZM12.0001 2.75C9.09005 2.75 5.35005 4.3 4.36005 8.66C3.28005 13.37 6.24005 17.43 8.92005 20C10.6501 21.67 13.3601 21.67 15.0901 20C17.7601 17.43 20.7201 13.37 19.6601 8.66C18.6601 4.3 14.9101 2.75 12.0001 2.75Z" fill="#292D32"/>
+                        <path d="M12 14.1699C9.87 14.1699 8.13 12.4399 8.13 10.2999C8.13 8.15994 9.87 6.43994 12 6.43994C14.13 6.43994 15.87 8.16994 15.87 10.3099C15.87 12.4499 14.13 14.1699 12 14.1699ZM12 7.93994C10.7 7.93994 9.63 8.99994 9.63 10.3099C9.63 11.6199 10.69 12.6799 12 12.6799C13.31 12.6799 14.37 11.6199 14.37 10.3099C14.37 8.99994 13.3 7.93994 12 7.93994Z" fill="#292D32" />
+                        <path d="M12.0001 22.76C10.5201 22.76 9.03005 22.2 7.87005 21.09C4.92005 18.25 1.66005 13.72 2.89005 8.33C4.00005 3.44 8.27005 1.25 12.0001 1.25C12.0001 1.25 12.0001 1.25 12.0101 1.25C15.7401 1.25 20.0101 3.44 21.1201 8.34C22.3401 13.73 19.0801 18.25 16.1301 21.09C14.9701 22.2 13.4801 22.76 12.0001 22.76ZM12.0001 2.75C9.09005 2.75 5.35005 4.3 4.36005 8.66C3.28005 13.37 6.24005 17.43 8.92005 20C10.6501 21.67 13.3601 21.67 15.0901 20C17.7601 17.43 20.7201 13.37 19.6601 8.66C18.6601 4.3 14.9101 2.75 12.0001 2.75Z" fill="#292D32" />
                       </svg>
-                      <Typography sx={{ 
+                      <Typography sx={{
                         color: 'rgba(17, 17, 17, 0.68)',
                         fontSize: '16px',
                         fontWeight: 400,
@@ -531,7 +552,7 @@ export default function ApplicantDetails() {
                         width: "max-content",
                       }}>
                         {item.personal_info.location}
-                        </Typography>
+                      </Typography>
                     </Box>
 
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -599,7 +620,7 @@ export default function ApplicantDetails() {
                         }}
                       >
                         {item.professional_info.experience} experience
-                        </Typography>
+                      </Typography>
                     </Box>
                   </Stack>
                 </ListItem>
@@ -813,8 +834,8 @@ export default function ApplicantDetails() {
                         </svg>
                         <Typography color="text.grey[100]">
                           {applicant?.personal_info?.location}
-                  </Typography>
-                </Box>
+                        </Typography>
+                      </Box>
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
@@ -835,18 +856,18 @@ export default function ApplicantDetails() {
                           />
                         </svg>
                         <Typography color="text.grey[100]">
-                    {applicant?.personal_info?.email}
-                  </Typography>
-                </Box>
+                          {applicant?.personal_info?.email}
+                        </Typography>
+                      </Box>
                       {/* Assessment Status Chips */}
                       {applicant?.assessments_results && Object.entries(applicant.assessments_results).map(([type, result]: [string, any]) => {
                         if (result) {
                           const status = result.assessment_submission_status || result.assessment_status;
                           if (status) {
-                            let label = `${type.split('_').map(word => 
+                            let label = `${type.split('_').map(word =>
                               word.charAt(0).toUpperCase() + word.slice(1)
                             ).join(' ')}`;
-                            
+
                             // Add status to label
                             if (status === 'submitted') {
                               label += ' (Submitted)';
@@ -903,10 +924,10 @@ export default function ApplicantDetails() {
                         return null;
                       })}
                     </Stack>
-              </Stack>
+                  </Stack>
 
-              {/* Skills */}
-                  <Stack direction="row" spacing={1} sx={{ my: 3 , flexWrap: "wrap", gap: 1}}>
+                  {/* Skills */}
+                  <Stack direction="row" spacing={1} sx={{ my: 3, flexWrap: "wrap", gap: 1 }}>
                     {applicant?.professional_info?.skills
                       ?.split(",")
                       .map((skill: string, index: number) => {
@@ -918,22 +939,29 @@ export default function ApplicantDetails() {
                           { bg: "rgba(59, 95, 158, 0.15)", color: "#3B5F9E" },
                         ];
                         return (
-                      <Chip
-                        key={index}
-                        label={skill.trim()}
-                        sx={{
+                          <Chip
+                            key={index}
+                            label={skill.trim()}
+                            title={skill.trim()}
+                            sx={{
                               bgcolor: colors[colorIndex].bg,
                               color: colors[colorIndex].color,
                               borderRadius: "16px",
+                              maxWidth: 240,
                               "& .MuiChip-label": {
                                 px: 2,
                                 py: 0.5,
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'block',
                               },
                             }}
                           />
                         );
                       })}
-              </Stack>
+                  </Stack>
 
                   {/* Key Info */}
                   <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 2 }}>
@@ -969,7 +997,7 @@ export default function ApplicantDetails() {
                           day: 'numeric'
                         })}
                       </Typography>
-                </Box>
+                    </Box>
                   </Stack>
                 </Box>
 
@@ -980,7 +1008,7 @@ export default function ApplicantDetails() {
                       <Box>
                         <Typography
                           variant="subtitle1"
-                          sx={{ fontWeight: 600 }}
+                          sx={{ fontWeight: 600, mb: 1 }}
                         >
                           Skills Analysis
                         </Typography>
@@ -994,25 +1022,34 @@ export default function ApplicantDetails() {
                               >
                                 Missing Required Skills:
                               </Typography>
-                              <Stack direction="row" spacing={1}>
+                              <Stack direction="row" flexWrap="wrap" gap={1}>
                                 {cvAnalysis?.missing_skills.map(
                                   (skill, index) => (
-                                  <Chip
-                                    key={index}
-                                    label={skill}
-                                    sx={{
+                                    <Chip
+                                      key={index}
+                                      label={skill}
+                                      title={skill}
+                                      sx={{
                                         bgcolor: "rgba(244, 67, 54, 0.1)",
                                         color: "error.main",
                                         borderRadius: "16px",
+                                        maxWidth: 240,
+                                        '& .MuiChip-label': {
+                                          maxWidth: '100%',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                          display: 'block',
+                                        },
                                       }}
                                     />
                                   )
                                 )}
                               </Stack>
-                </Box>
+                            </Box>
                           )}
-              </Stack>
-            </Box>
+                        </Stack>
+                      </Box>
                       <Box
                         sx={{
                           bgcolor: "rgba(17, 17, 17, 0.04)",
@@ -1025,14 +1062,14 @@ export default function ApplicantDetails() {
                           sx={{ fontWeight: 600 }}
                         >
                           Recommendations
-              </Typography>
+                        </Typography>
                         <Typography
                           color="text.grey[100]"
                           sx={{ whiteSpace: "pre-line" }}
                         >
                           {cvAnalysis.recommendations}
-              </Typography>
-            </Box>
+                        </Typography>
+                      </Box>
                     </Stack>
                   </Box>
                 )}
@@ -1099,21 +1136,32 @@ export default function ApplicantDetails() {
                         </Link>
                       </Box>
 
-                      <iframe
-                        allowFullScreen
-                        unselectable="on"
-                        src={applicant.attachments?.cv || applicant.attachments?.external_cv_link || "#"}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          border: "none",
-                        }}
-                        title="CV Preview"
-                      />
+                      {(() => {
+                        const rawUrl = applicant.attachments?.cv || applicant.attachments?.external_cv_link || "#";
+                        const isPdf = /\.pdf($|\?)/i.test(rawUrl);
+                        const forcesDownload = /content-disposition=attachment/i.test(rawUrl);
+                        const previewSrc = isPdf && !forcesDownload
+                          ? rawUrl
+                          : `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(rawUrl)}`;
+                        return (
+                          <iframe
+                            allowFullScreen
+                            unselectable="on"
+                            src={previewSrc}
+                            referrerPolicy="no-referrer"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              border: "none",
+                            }}
+                            title="CV Preview"
+                          />
+                        );
+                      })()}
                     </Box>
                   ) : (
-                    <Box 
-                      sx={{ 
+                    <Box
+                      sx={{
                         mb: 4,
                         p: 3,
                         bgcolor: "rgba(17, 17, 17, 0.04)",
@@ -1135,21 +1183,21 @@ export default function ApplicantDetails() {
                   sx={{
                     display: "flex",
                     justifyContent: "flex-end",
-                  gap: 2,
-                  mt: 4,
+                    gap: 2,
+                    mt: 4,
                     position: "sticky",
-                  bottom: 0,
+                    bottom: 0,
                     bgcolor: "background.paper",
                     py: 2,
                   }}
                 >
-              <Button
-                variant="outlined"
-                onClick={handleReject}
-                sx={{
-                  borderRadius: 2,
+                  <Button
+                    variant="outlined"
+                    onClick={handleReject}
+                    sx={{
+                      borderRadius: 2,
                       textTransform: "none",
-                  px: 3,
+                      px: 3,
                       py: 1.5,
                       transition: "all 0.2s ease-in-out",
                       "&:hover": {
@@ -1157,18 +1205,18 @@ export default function ApplicantDetails() {
                         transform: "translateY(-1px)",
                         boxShadow: "0 4px 12px rgba(68, 68, 226, 0.1)",
                       },
-                }}
-              >
-                Reject
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleMoveToAssessment}
-                sx={{
-                  borderRadius: 2,
+                    }}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleMoveToAssessment}
+                    sx={{
+                      borderRadius: 2,
                       textTransform: "none",
-                  px: 3,
-                  py: 1.5,
+                      px: 3,
+                      py: 1.5,
                       bgcolor: "primary.main",
                       transition: "all 0.2s ease-in-out",
                       "&:hover": {
@@ -1176,11 +1224,11 @@ export default function ApplicantDetails() {
                         transform: "translateY(-1px)",
                         boxShadow: "0 4px 12px rgba(68, 68, 226, 0.15)",
                       },
-                }}
-              >
-                Move to Assessment
-              </Button>
-            </Box>
+                    }}
+                  >
+                    Move to Assessment
+                  </Button>
+                </Box>
               </Fragment>
             )}
           </Paper>

@@ -422,7 +422,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   }
 
   return (
-    <Box sx={{ p: 3, mb: 2, borderRadius: 2, backgroundColor: 'white' }}>
+    <Box sx={{ p: 3, mb: 2, borderRadius: 2, backgroundColor: 'white', width: '20%', minWidth: '300px' }}>
       <Box
         sx={{
           display: 'flex',

@@ -16,7 +16,7 @@ interface MobileCandidateGridProps {
   getStageValue: (tabValue: number) => StageType;
   handleSelectCandidate: (id: number) => void;
   handleCardClick: (candidateId: number, event: React.MouseEvent<HTMLElement>) => void;
-  handleUpdateStages: (params: { stage: StageType; entries?: number[] }) => Promise<void>;
+  handleUpdateStages: (action: string, entries: number[]) => Promise<void>;
   getSkillChipColor: (skill: string) => SkillColor;
   theme: Theme;
 }
@@ -81,11 +81,11 @@ const MobileCandidateGrid: React.FC<MobileCandidateGridProps> = ({
                       sx={{
                         fontWeight: 600,
                         color: 'rgba(17, 17, 17, 0.92)',
-                        fontSize: { xs: '16px', sm: '18px' },
+                        fontSize: { xs: '14px', sm: '16px' },
                         mb: 0.5,
                       }}
                     >
-                      {candidate.name}
+                      {candidate.personal_info?.firstname} {candidate.personal_info?.lastname}
                     </Typography>
                   </Box>
                 </Box>
@@ -159,15 +159,22 @@ const MobileCandidateGrid: React.FC<MobileCandidateGridProps> = ({
                 <Chip
                   key={index}
                   label={skill.trim()}
+                  title={skill.trim()}
                   size="small"
                   sx={{
                     bgcolor: getSkillChipColor(skill).bg,
                     color: getSkillChipColor(skill).color,
                     height: '28px',
+                    maxWidth: 240,
                     '& .MuiChip-label': {
                       px: 1.5,
                       fontSize: '13px',
                       fontWeight: 500,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      display: 'block',
                     },
                   }}
                 />
@@ -194,10 +201,7 @@ const MobileCandidateGrid: React.FC<MobileCandidateGridProps> = ({
                     )
                   }
                   onClick={() =>
-                    handleUpdateStages({
-                      stage: option.action as StageType,
-                      entries: [candidate.id],
-                    })
+                    handleUpdateStages(option.action, [candidate.id])
                   }
                   disabled={isMovingStage.length > 0}
                   fullWidth

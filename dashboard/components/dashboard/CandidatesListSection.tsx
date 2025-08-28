@@ -55,9 +55,10 @@ interface CandidateListSectionProps {
   candidate: any; // Update with proper type
   isSelected: boolean;
   onSelectCandidate: (id: number) => void;
+  setSelectedEntries: (entries: number[]) => void;
   selectedEntries: number[];
-  onUpdateStages: (stage: string, entries: number[]) => void;
-  disableSelection?: boolean;
+  onUpdateStages: (action: string) => void;
+  // disableSelection?: boolean;
   currentStage: StageType;
   onNotification?: (message: string, severity: 'success' | 'error') => void;
   phaseOptions: Record<StageType, CandidatePhaseOption[]>;
@@ -70,17 +71,16 @@ export default function CandidateListSection({
   candidate,
   isSelected,
   onSelectCandidate,
+  setSelectedEntries,
   selectedEntries,
   onUpdateStages,
-  disableSelection,
+  // disableSelection,
   currentStage,
   onNotification,
   phaseOptions,
 }: CandidateListSectionProps) {
   const router = useRouter();
   const theme = useTheme();
-  console.log('Candidate data:', candidate); // Debug log
-  console.log('Assessment results:', candidate?.assessments_results); // Debug log for assessment results
   const skills: Skill[] = candidate?.professional_info?.skills?.split(",")
     .map((skill: string) => skill.trim())
     .filter((skill: string) => skill.length > 0) || [];
@@ -176,7 +176,7 @@ export default function CandidateListSection({
         );
       } else {
         // Handle regular stage update
-        await onUpdateStages(action, [candidate.id]);
+        onUpdateStages(action);
         onNotification?.(
           `Applicant moved to '${action.replace('_', ' ')}'`,
           'success'
@@ -205,7 +205,6 @@ export default function CandidateListSection({
     // Get the job_id from the URL
     const pathParts = window.location.pathname.split('/');
     const jobId = pathParts[pathParts.length - 2];
-    console.log("jobId", jobId);
     // Navigate to the applicant details page
     // router.push(`/dashboard/job-posting/${jobId}/submissions/${candidate.id}`);
   };
@@ -378,7 +377,7 @@ export default function CandidateListSection({
         }
       }}
     >
-      {!disableSelection && (
+      {/* {!disableSelection && ( */}
         <Box sx={{ p: 0 }} className="checkbox-container">
           <Checkbox
             sx={{ p: 0 }}
@@ -412,7 +411,7 @@ export default function CandidateListSection({
             }
           />
         </Box>
-      )}
+      {/* )} */}
       <Box
         sx={{
           width: "100%",
@@ -579,20 +578,32 @@ export default function CandidateListSection({
         </Box>
 
         {/* Skills chips */}
-        <Box sx={{ display: "flex", gap: 1, mt: 2, ml: "12px" }}>
+        <Box sx={{ display: "flex", gap: 1, mt: 2, ml: "12px", flexWrap: 'wrap' }}>
           {limitedSkills.map((skill, index) => (
             <Chip
               key={index}
               label={skill}
+              title={skill}
+              size="small"
               sx={{
                 bgcolor: skillColors[index % skillColors.length].bg,
                 color: skillColors[index % skillColors.length].color,
-                borderRadius: "28px",
-                fontSize: 14,
-                fontWeight: 400,
+                height: '28px',
+                maxWidth: 240,
+                '& .MuiChip-label': {
+                  px: 1.5,
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'block',
+                },
               }}
             />
           ))}
+          
         </Box>
 
         {/* Quick Actions Button - Always visible */}
@@ -661,19 +672,17 @@ export default function CandidateListSection({
 
           {/* Phase-specific options */}
           {filteredOptions.map((option: CandidatePhaseOption) => {
+            console.log("option", option);
             const IconComponent = option.icon;
-            const isEmailStage = ["interviews", "acceptance", "archived"].includes(option.action);
             return (
               <MenuItem
                 key={option.action}
                 onClick={async (e) => {
                   e.stopPropagation();
                   handleClose();
-                  if (isEmailStage) {
-                    await openEmailModalForAction(option.action);
-                  } else {
-                    await handleAction(e, option.action);
-                  }
+                  setSelectedEntries([candidate.id]);
+                  onUpdateStages(option.action);
+               
                 }}
                 disabled={loadingStage !== null}
                 sx={{
