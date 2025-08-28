@@ -1347,9 +1347,26 @@ export default function Home() {
               <Box sx={{
                 display: { xs: 'block', md: viewMode === 'grid' ? 'block' : 'none' },
                 width: '100%',
-                height: '100%',
+                height: 'calc(100vh - 325px)',
                 overflow: 'auto',
                 bgcolor: "transparent !important",
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#032B4420 transparent',
+                '&::-webkit-scrollbar': {
+                  height: '4px',
+                  width: '4px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#032B44',
+                  width: '4px',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    background: 'rgba(68, 68, 226, 0.3)',
+                  },
+                },
               }}>
                 <Grid container spacing={3}>
                   {filteredCandidates?.applications?.map((candidate) => (
@@ -1366,12 +1383,12 @@ export default function Home() {
                           display: 'flex',
                           flexDirection: 'column',
                           gap: { xs: 1.5, sm: 2 },
-                          minHeight: { xs: '380px', sm: '420px' }
+                          minHeight: { xs: '300px', sm: '300px' }
                         }}
                       >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, flexDirection: 'column' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexDirection: '' }}>
-                            <Checkbox
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexDirection: 'column' }}>
+                          {/* <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexDirection: '' }}> */}
+                            {/* <Checkbox
                               checked={selectedEntries.includes(candidate.id)}
                               onChange={() => handleSelectCandidate(candidate.id)}
                               disabled={subTabValue === 3 || filteredCandidates?.applications?.length === 1}
@@ -1385,15 +1402,15 @@ export default function Home() {
                                   fontSize: 20
                                 }
                               }}
-                            />
+                            /> */}
                             <Box>
-                              <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 600, color: 'rgba(17, 17, 17, 0.92)', textTransform: 'capitalize' }}>
+                              <Typography variant="h6" sx={{ fontSize: '16px', mb: 2, fontWeight: 600, color: 'rgba(17, 17, 17, 0.92)', textTransform: 'capitalize' }}>
                                 {candidate.personal_info.firstname} {candidate.personal_info.lastname}
                               </Typography>
 
                             </Box>
-                          </Box>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 2.5 } }}>
+                          {/* </Box> */}
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, sm: 2 } }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M6.66662 18.3333H13.3333C16.6833 18.3333 17.2833 16.9917 17.4583 15.3583L18.0833 8.69167C18.3083 6.65833 17.725 5 14.1666 5H5.83329C2.27496 5 1.69162 6.65833 1.91662 8.69167L2.54162 15.3583C2.71662 16.9917 3.31662 18.3333 6.66662 18.3333Z" stroke="#111111" stroke-opacity="0.62" stroke-width="1.25" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
@@ -1431,23 +1448,30 @@ export default function Home() {
                           </Box>
                         </Box>
 
-                        <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                           {candidate.professional_info.skills?.split(',').map((skill, index) => (
-                            <Chip
-                              key={index}
-                              label={skill.trim()}
-                              size="small"
-                              sx={{
-                                bgcolor: getSkillChipColor(skill).bg,
-                                color: getSkillChipColor(skill).color,
-                                height: '28px',
-                                '& .MuiChip-label': {
-                                  px: 1.5,
-                                  fontSize: '13px',
-                                  fontWeight: 500,
-                                },
-                              }}
-                            />
+                           <Chip
+                           key={index}
+                           label={skill}
+                           title={skill}
+                           size="small"
+                           sx={{
+                             bgcolor: skillColors[index % skillColors.length].bg,
+                             color: skillColors[index % skillColors.length].color,
+                             height: '28px',
+                             maxWidth: 240,
+                             '& .MuiChip-label': {
+                               px: 1.5,
+                               fontSize: '13px',
+                               fontWeight: 500,
+                               maxWidth: '100%',
+                               overflow: 'hidden',
+                               textOverflow: 'ellipsis',
+                               whiteSpace: 'nowrap',
+                               display: 'block',
+                             },
+                           }}
+                         />
                           ))}
                         </Box>
 
@@ -1471,7 +1495,7 @@ export default function Home() {
                           </Stack>
                         </Link>
 
-                        <Box sx={{
+                        {/* <Box sx={{
                           mt: 2,
                           display: 'flex',
                           flexDirection: {
@@ -1507,7 +1531,7 @@ export default function Home() {
                               {isMovingStage ? 'Moving...' : option.label}
                             </Button>
                           ))}
-                        </Box>
+                        </Box> */}
                       </Paper>
                     </Grid>
                   ))}
