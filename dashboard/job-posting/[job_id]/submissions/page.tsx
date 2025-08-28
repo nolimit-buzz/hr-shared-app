@@ -1552,8 +1552,8 @@ export default function Home() {
                     <Box
                       className="thin-scrollbar"
                       sx={{
-                        height: "max-content",
-                        overflow: "auto",
+                        // height: "max-content",
+                        overflowY: "auto",
                         pt: 0,
                         pb: 2,
                         display: { xs: "none", lg: "block" },
