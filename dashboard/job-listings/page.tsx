@@ -44,7 +44,8 @@ import zIndex from "@mui/material/styles/zIndex";
 import { useRouter } from "next/navigation";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
+import { red } from '@mui/material/colors';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -65,8 +66,8 @@ import LinearProgress from '@mui/material/LinearProgress';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
-import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+// import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import SearchIcon from '@mui/icons-material/Search';
@@ -75,6 +76,10 @@ import PersonIcon from '@mui/icons-material/Person';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PeopleIcon from '@mui/icons-material/People';
 import CheckIcon from '@mui/icons-material/Check';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteSnackbar from '@/app/dashboard/components/DeleteSnackbar';
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 
 const WorkTypeIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -112,12 +117,7 @@ const ShareLinkIcon = () => {
   );
 };
 
-const SuccessIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 22.75C6.07 22.75 1.25 17.93 1.25 12C1.25 6.07 6.07 1.25 12 1.25C17.93 1.25 22.75 6.07 22.75 12C22.75 17.93 17.93 22.75 12 22.75ZM12 2.75C6.9 2.75 2.75 6.9 2.75 12C2.75 17.1 6.9 21.25 12 21.25C17.1 21.25 21.25 17.1 21.25 12C21.25 6.9 17.1 2.75 12 2.75Z" fill="#292D32" />
-    <path d="M10.58 15.58C10.38 15.58 10.19 15.5 10.05 15.36L7.22 12.53C6.93 12.24 6.93 11.76 7.22 11.47C7.51 11.18 7.99 11.18 8.28 11.47L10.58 13.77L15.72 8.63001C16.01 8.34001 16.49 8.34001 16.78 8.63001C17.07 8.92001 17.07 9.40001 16.78 9.69001L11.11 15.36C10.97 15.5 10.78 15.58 10.58 15.58Z" fill="#292D32" />
-  </svg>
-);
+
 
 interface JobPosting {
   id: string;
@@ -517,6 +517,46 @@ const JobPostings = () => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [isStatusChanging, setIsStatusChanging] = useState(false);
   const [updatingJobId, setUpdatingJobId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<JobPosting | null>(null);
+  const [statusSnack, setStatusSnack] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+  const refetchJobPostings = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("jwt");
+      const queryParams = new URLSearchParams();
+      if (statusFilter !== "all") {
+        queryParams.append('status', statusFilter);
+      }
+      if (filters.job_title) {
+        queryParams.append('job_title', filters.job_title);
+      }
+      if (filters.location) {
+        queryParams.append('location', filters.location);
+      }
+      if (filters.work_model) {
+        queryParams.append('work_model', filters.work_model);
+      }
+      if (filters.job_type) {
+        queryParams.append('job_type', filters.job_type);
+      }
+      const url = `https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error('Failed to refetch jobs');
+      const data = await response.json();
+      setJobPostings(data.results || data);
+    } catch (err) {
+      console.error('Error refetching job postings:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchJobPostings = async () => {
@@ -729,13 +769,38 @@ const JobPostings = () => {
   };
 
   const handleStatusToggle = async (job: JobPosting) => {
+    // Reopen job when currently closed
+    // if (job.status !== 'active') {
+      try {
+        const token = localStorage.getItem("jwt");
+        const payload = { ...job, status: job.status } as any;
+        setUpdatingJobId(job.id);
+        const response = await fetch(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${job.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          throw new Error('Failed to reopen job');
+        }
+        setJobPostings(prevJobs => prevJobs.map(j => j.id === job.id ? { ...j, status: 'active' } : j));
+        await refetchJobPostings();
+        setStatusSnack({ open: true, message: 'Job reopened successfully' });
+      } catch (error) {
+        console.error('Error updating job status:', error);
+      } finally {
+        setUpdatingJobId(null);
+      }
+    // }
+  };
+
+  const handleCloseResponses = async (job: JobPosting) => {
     try {
       const token = localStorage.getItem("jwt");
-      const updatedJob = {
-        ...job,
-        status: job.status === 'active' ? 'closed' : 'active'
-      };
-      
+      const payload = { ...job, status: 'close' } as any;
       setUpdatingJobId(job.id);
       const response = await fetch(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${job.id}`, {
         method: 'PUT',
@@ -743,25 +808,58 @@ const JobPostings = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(updatedJob)
+        body: JSON.stringify(payload)
       });
-
       if (!response.ok) {
-        throw new Error('Failed to update job status');
+        throw new Error('Failed to close responses for job');
       }
-
-      // Update the job in the state
-      setJobPostings(prevJobs => 
-        prevJobs.map(j => 
-          j.id === job.id ? { ...j, status: updatedJob.status } : j
-        )
-      );
+      // API expects 'close' in payload; normalize to 'closed' locally for UI/filters
+      setJobPostings(prevJobs => prevJobs.map(j => j.id === job.id ? { ...j, status: 'closed' } : j));
+      await refetchJobPostings();
+      setStatusSnack({ open: true, message: 'Responses closed for this job' });
     } catch (error) {
-      console.error('Error updating job status:', error);
-      // You might want to show an error message here
+      console.error('Error closing job responses:', error);
     } finally {
       setUpdatingJobId(null);
     }
+  };
+
+  const handleDeleteClick = () => {
+    if (selectedJob) {
+      setJobToDelete(selectedJob);
+      setDeleteDialogOpen(true);
+    }
+    handleQuickActionsClose();
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!jobToDelete) return;
+    try {
+      const token = localStorage.getItem("jwt");
+      const response = await fetch(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${jobToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete job');
+      }
+      setJobPostings(prev => prev.filter(j => j.id !== jobToDelete.id));
+      await refetchJobPostings();
+      setStatusSnack({ open: true, message: 'Job deleted' });
+    } catch (error) {
+      console.error('Error deleting job:', error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setJobToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setJobToDelete(null);
   };
 
   const renderTableContent = () => {
@@ -979,6 +1077,72 @@ const JobPostings = () => {
                   {job.work_model}
                 </Box>
             </Stack>
+            <Box sx={{ mt: 2, display: 'flex', gap: 1.25, flexWrap: 'wrap' }}>
+              {!(job.status && ['closed', 'close'].includes(job.status.toLowerCase())) ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<BlockRoundedIcon sx={{ fontSize: 18 }} />}
+                  onClick={(e) => { e.stopPropagation(); handleCloseResponses(job); }}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '13px',
+                    borderRadius: '20px',
+                    px: 1.5,
+                    py: 0.5,
+                    borderColor: 'rgba(17, 17, 17, 0.12)',
+                    color: 'rgba(17, 17, 17, 0.72)',
+                    '&:hover': {
+                      borderColor: 'rgba(68, 68, 226, 0.25)',
+                      backgroundColor: 'rgba(68, 68, 226, 0.04)'
+                    }
+                  }}
+                >
+                  Close responses
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<CheckCircleOutlineOutlinedIcon sx={{ fontSize: 18 }} />}
+                  onClick={(e) => { e.stopPropagation(); handleStatusToggle(job); }}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '13px',
+                    borderRadius: '20px',
+                    px: 1.5,
+                    py: 0.5,
+                    borderColor: 'rgba(17, 17, 17, 0.12)',
+                    color: 'rgba(17, 17, 17, 0.72)',
+                    '&:hover': {
+                      borderColor: 'rgba(68, 68, 226, 0.25)',
+                      backgroundColor: 'rgba(68, 68, 226, 0.04)'
+                    }
+                  }}
+                >
+                  Reopen job
+                </Button>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteRoundedIcon sx={{ fontSize: 18 }} />}
+                onClick={(e) => { e.stopPropagation(); setJobToDelete(job); setDeleteDialogOpen(true); }}
+                sx={{
+                  textTransform: 'none',
+                  fontSize: '13px',
+                  borderRadius: '20px',
+                  px: 1.5,
+                  py: 0.5,
+                  '&:hover': {
+                    backgroundColor: (theme) => theme.palette.error[theme.palette.mode === 'dark' ? 'dark' : 'main'] + '1F'
+                  }
+                }}
+              >
+                Delete job
+              </Button>
+            </Box>
           </Stack>
         </StyledTableCell>
         <StyledTableCell>
@@ -2017,26 +2181,75 @@ const JobPostings = () => {
                                 pb: 2,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                      color: 'rgba(17, 17, 17, 0.72)',
-                                transition: 'all 0.3s ease-in-out',
-                                '&:hover': {
-                                  color: theme.palette.primary.main,
-                                  transform: 'translateX(4px)',
-                                }
+                                justifyContent: 'space-between',
+                                gap: 1
                               }}>
-                                <Typography variant="body2" sx={{
-                                  fontSize: '14px',
-                                  fontWeight: 500,
-                                  mr: 1,
-                                  transition: 'all 0.3s ease-in-out'
+                                <Box
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setJobToDelete(job);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    color: 'rgba(17, 17, 17, 0.72)',
+                                    transition: 'all 0.3s ease-in-out',
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                      color: '#d32f2f',
+                                      transform: 'translateX(-4px)',
+                                    }
+                                  }}
+                                >
+                                  <DeleteOutlineIcon sx={{
+                                    fontSize: '16px',
+                                    mr: 0.5,
+                                    transition: 'all 0.3s ease-in-out'
+                                  }} />
+                                  <Typography variant="body2" sx={{
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    transition: 'all 0.3s ease-in-out'
+                                  }}>
+                                    Delete
+                                  </Typography>
+                                </Box>
+                                <Divider 
+                                  orientation="vertical" 
+                                  flexItem 
+                                  sx={{ 
+                                    borderColor: 'rgba(17, 17, 17, 0.08)',
+                                    height: '20px',
+                                    alignSelf: 'center'
+                                  }} 
+                                />
+                                <Box sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'rgba(17, 17, 17, 0.72)',
+                                  transition: 'all 0.3s ease-in-out',
+                                  cursor: 'pointer',
+                                  flex: 1,
+                                  '&:hover': {
+                                    color: theme.palette.primary.main,
+                                    transform: 'translateX(4px)',
+                                  }
                                 }}>
-                                  View submissions
-                                    </Typography>
-                                <ArrowForwardIcon sx={{
-                                  fontSize: '16px',
-                                  transition: 'all 0.3s ease-in-out'
-                                }} />
+                                  <Typography variant="body2" sx={{
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    mr: 1,
+                                    transition: 'all 0.3s ease-in-out'
+                                  }}>
+                                    View submissions
+                                  </Typography>
+                                  <ArrowForwardIcon sx={{
+                                    fontSize: '16px',
+                                    transition: 'all 0.3s ease-in-out'
+                                  }} />
+                                </Box>
                             </Box>
                           </Stack>
                         </Paper>
@@ -2104,7 +2317,7 @@ const JobPostings = () => {
           </Typography>
         </MenuItem>
         <MenuItem 
-          onClick={() => selectedJob && handleStatusToggle(selectedJob)}
+          onClick={() => selectedJob && (selectedJob.status === 'active' ? handleCloseResponses(selectedJob) : handleStatusToggle(selectedJob))}
           sx={{
             py: 1.5,
             px: 2,
@@ -2121,12 +2334,12 @@ const JobPostings = () => {
                 fontSize: '20px'
               }} />
               <Typography sx={{ color: 'rgba(17, 17, 17, 0.92)', fontSize: '14px' }}>
-                Close Job
+                Close responses
               </Typography>
             </>
           ) : (
             <>
-              <CheckCircleRoundedIcon sx={{ 
+              <CheckCircleOutlineOutlinedIcon sx={{ 
                 mr: 1.5, 
                 color: 'rgba(17, 17, 17, 0.48)',
                 fontSize: '20px'
@@ -2156,6 +2369,25 @@ const JobPostings = () => {
             Share
           </Typography>
         </MenuItem>
+        <MenuItem 
+          onClick={handleDeleteClick}
+          sx={{
+            py: 1.5,
+            px: 2,
+            '&:hover': {
+              backgroundColor: (theme) => theme.palette.error[theme.palette.mode === 'dark' ? 'dark' : 'main'] + '1F',
+            }
+          }}
+        >
+          <DeleteRoundedIcon sx={{ 
+            mr: 1.5, 
+            color: (theme) => theme.palette.error.main,
+            fontSize: '20px'
+          }} />
+          <Typography sx={{ color: 'rgba(17, 17, 17, 0.92)', fontSize: '14px' }}>
+            Delete
+          </Typography>
+        </MenuItem>
       </Menu>
 
       {selectedJob && (
@@ -2166,6 +2398,35 @@ const JobPostings = () => {
           jobId={selectedJob.id}
         />
       )}
+
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600, pb: 2, px: 4, pt: 4 }}>Delete Job</DialogTitle>
+        <DialogContent sx={{ px: 4, pb: 2 }}>
+          <Typography sx={{ color: 'rgba(17, 17, 17, 0.72)' }}>
+            Are you sure you want to delete "{jobToDelete?.title}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 4, pb: 3 }}>
+          <Button variant="contained" color="primary" onClick={handleDeleteCancel} sx={{ textTransform: 'none', '&:hover': { backgroundColor: theme.palette.primary.dark } }}>Cancel</Button>
+          <Button 
+            variant="outlined" 
+            color="error" 
+            onClick={handleDeleteConfirm} 
+            sx={{ 
+              textTransform: 'none',
+              borderColor: '#d32f2f',
+              color: '#d32f2f',
+              '&:hover': {
+                borderColor: '#b71c1c',
+                color: '#b71c1c',
+                backgroundColor: 'rgba(211, 47, 47, 0.04)'
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add Search Modal */}
       <Dialog
@@ -2409,51 +2670,18 @@ const JobPostings = () => {
         </Box>
       </Dialog>
 
-      <Snackbar
+      <DeleteSnackbar
+        open={statusSnack.open}
+        message={statusSnack.message}
+        onClose={() => setStatusSnack({ open: false, message: '' })}
+      />
+
+      <DeleteSnackbar
         open={snackbarOpen}
-        autoHideDuration={4000}
+        message="Job opening link has been copied to clipboard"
         onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{
-          zIndex: 9999,
-        }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity="success"
-          icon={<SuccessIcon />}
-          sx={{
-            minWidth: '300px',
-            backgroundColor: 'primary.main',
-            color: 'secondary.light',
-            borderRadius: '100px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            '& .MuiAlert-icon': {
-              color: '#fff',
-              marginRight: '8px',
-              padding: 0,
-            },
-            '& .MuiAlert-message': {
-              padding: '6px 0',
-              fontSize: '15px',
-              textAlign: 'center',
-              flex: 'unset',
-            },
-            '& .MuiAlert-action': {
-              padding: '0 8px 0 0',
-              marginRight: 0,
-              '& .MuiButtonBase-root': {
-                color: '#fff',
-                padding: 1,
-              },
-            },
-          }}
-        >
-          Job opening link has been copied to clipboard
-        </Alert>
-      </Snackbar>
+        autoHideDuration={4000}
+      />
     </Box>
   );
 };

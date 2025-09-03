@@ -18,10 +18,17 @@ import {
   IconButton,
   Alert,
   Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import DashboardCard from "@/app/dashboard/components/shared/DashboardCard";
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { useRouter } from 'next/navigation';
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 interface JobPosting {
   id: string;
   title: string;
@@ -194,6 +201,12 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [updatingJobId, setUpdatingJobId] = useState<string | null>(null);
+  const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
+  const [localJobPostings, setLocalJobPostings] = useState<JobPosting[] | null>(null);
+  const [statusSnack, setStatusSnack] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<JobPosting | null>(null);
 
   useEffect(() => {
     const userProfile = localStorage.getItem('userProfile');
@@ -217,6 +230,99 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
   const handleMenuItemClick = (value: 'all' | 'active' | 'closed') => {
     setStatusFilter(value);
     handleMenuClose();
+  };
+
+  useEffect(() => {
+    // keep local copy in sync when parent provides updates
+    setLocalJobPostings(jobPostings);
+  }, [jobPostings]);
+
+  const refetchJobs = async () => {
+    try {
+      const token = localStorage.getItem('jwt');
+      const url = `https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error('Failed to refetch jobs');
+      const data = await response.json();
+      setLocalJobPostings(data.results || data);
+    } catch (err) {
+      console.error('Error refetching jobs:', err);
+    }
+  };
+
+  const handleCloseResponses = async (job: JobPosting) => {
+    try {
+      const token = localStorage.getItem('jwt');
+      setUpdatingJobId(job.id);
+      const payload = { ...job, status: 'close' } as any;
+      const response = await fetch(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${job.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to close responses');
+      await refetchJobs();
+      setStatusSnack({ open: true, message: 'Responses closed for this job' });
+    } catch (err) {
+      console.error('Error closing responses:', err);
+    } finally {
+      setUpdatingJobId(null);
+    }
+  };
+
+  const handleDelete = async (job: JobPosting) => {
+    try {
+      const token = localStorage.getItem('jwt');
+      setDeletingJobId(job.id);
+      const response = await fetch(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${job.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to delete job');
+      await refetchJobs();
+      setStatusSnack({ open: true, message: 'Job deleted' });
+    } catch (err) {
+      console.error('Error deleting job:', err);
+    } finally {
+      setDeletingJobId(null);
+      setDeleteDialogOpen(false);
+      setJobToDelete(null);
+    }
+  };
+
+  const handleReopen = async (job: JobPosting) => {
+    try {
+      const token = localStorage.getItem('jwt');
+      setUpdatingJobId(job.id);
+      const payload = { ...job, status: 'active' } as any;
+      const response = await fetch(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${job.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to reopen job');
+      await refetchJobs();
+      setStatusSnack({ open: true, message: 'Job reopened successfully' });
+    } catch (err) {
+      console.error('Error reopening job:', err);
+    } finally {
+      setUpdatingJobId(null);
+    }
   };
 
   const renderTableContent = () => {
@@ -266,7 +372,8 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
       );
     }
 
-    return jobPostings?.map((job) => (
+    const sourceJobs = localJobPostings ?? jobPostings;
+    return sourceJobs?.map((job) => (
       <StyledTableRow
         key={job.id}
         onClick={() => router.push(`/dashboard/job-posting/${job.id}/submissions`)}
@@ -310,6 +417,79 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
                 {job.location}
               </StyledSubtitleTypography>
             </Stack>
+            <Box sx={{ mt: 2, display: 'flex', gap: 1.25, flexWrap: 'wrap' }}>
+              {!(job.status && ['closed', 'close'].includes(job.status.toLowerCase())) ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={(e) => { e.stopPropagation(); handleCloseResponses(job); }}
+                  disabled={updatingJobId === job.id}
+                  startIcon={<BlockRoundedIcon sx={{ fontSize: 18 }} />}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '13px',
+                    borderRadius: '20px',
+                    px: 1.5,
+                    py: 0.5,
+                    borderColor: 'rgba(17, 17, 17, 0.12)',
+                    color: 'rgba(17, 17, 17, 0.72)',
+                    '&:hover': {
+                      borderColor: 'rgba(68, 68, 226, 0.25)',
+                      backgroundColor: 'rgba(68, 68, 226, 0.04)'
+                    }
+                  }}
+                >
+                  {updatingJobId === job.id ? 'Closing…' : 'Close responses'}
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={(e) => { e.stopPropagation(); handleReopen(job); }}
+                  disabled={updatingJobId === job.id}
+                  startIcon={<CheckCircleOutlineOutlinedIcon sx={{ fontSize: 18 }} />}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '13px',
+                    borderRadius: '20px',
+                    px: 1.5,
+                    py: 0.5,
+                    borderColor: 'rgba(17, 17, 17, 0.12)',
+                    color: 'rgba(17, 17, 17, 0.72)',
+                    '&:hover': {
+                      borderColor: 'rgba(68, 68, 226, 0.25)',
+                      backgroundColor: 'rgba(68, 68, 226, 0.04)'
+                    }
+                  }}
+                >
+                  {updatingJobId === job.id ? 'Reopening…' : 'Reopen job'}
+                </Button>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                onClick={(e) => { e.stopPropagation(); setJobToDelete(job); setDeleteDialogOpen(true); }}
+                disabled={deletingJobId === job.id}
+                startIcon={<DeleteRoundedIcon sx={{ fontSize: 18 }} />}
+                sx={{
+                  textTransform: 'none',
+                  fontSize: '13px',
+                  borderRadius: '20px',
+                  px: 1.5,
+                  py: 0.5,
+                  borderColor: 'rgba(17, 17, 17, 0.12)',
+                  color: 'rgba(17, 17, 17, 0.72)',
+                  '&:hover': {
+                    borderColor: '#d32f2f',
+                    color: '#d32f2f',
+                    backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                  }
+                }}
+              >
+                {deletingJobId === job.id ? 'Deleting…' : 'Delete job'}
+              </Button>
+            </Box>
           </Stack>
         </StyledTableCell>
         <StyledTableCell>
@@ -577,6 +757,78 @@ const JobPostings = ({ statusFilter, setStatusFilter, jobPostings, handleOpen, c
             }}
           >
             Job opening link has been copied to clipboard
+          </Alert>
+        </Snackbar>
+        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 600, pb: 2, px: 4, pt: 4 }}>Delete Job</DialogTitle>
+          <DialogContent sx={{ px: 4, pb: 2 }}>
+            <Typography sx={{ color: 'rgba(17, 17, 17, 0.72)' }}>
+              Are you sure you want to delete "{jobToDelete?.title}"? This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 4, pb: 3 }}>
+            <Button variant="contained" color="primary" onClick={() => setDeleteDialogOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
+            <Button
+              color="error"
+              variant="outlined"
+              onClick={() => jobToDelete && handleDelete(jobToDelete)}
+              disabled={!!deletingJobId}
+              sx={{ 
+                textTransform: 'none',
+                borderColor: '#d32f2f',
+                color: '#d32f2f',
+                '&:hover': {
+                  borderColor: '#b71c1c',
+                  color: '#b71c1c',
+                  backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Snackbar
+          open={statusSnack.open}
+          autoHideDuration={3000}
+          onClose={() => setStatusSnack({ open: false, message: '' })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{ zIndex: 1301 }}
+        >
+          <Alert
+            onClose={() => setStatusSnack({ open: false, message: '' })}
+            severity="success"
+            icon={<SuccessIcon />}
+            sx={{
+              minWidth: '300px',
+              backgroundColor: 'primary.main',
+              color: 'secondary.light',
+              borderRadius: '100px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '& .MuiAlert-icon': {
+                color: '#fff',
+                marginRight: '8px',
+                padding: 0,
+              },
+              '& .MuiAlert-message': {
+                padding: '6px 0',
+                fontSize: '15px',
+                textAlign: 'center',
+                flex: 'unset',
+              },
+              '& .MuiAlert-action': {
+                padding: '0 8px 0 0',
+                marginRight: 0,
+                '& .MuiButtonBase-root': {
+                  color: '#fff',
+                  padding: 1,
+                },
+              },
+            }}
+          >
+            {statusSnack.message}
           </Alert>
         </Snackbar>
       </>

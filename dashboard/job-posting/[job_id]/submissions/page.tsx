@@ -29,6 +29,7 @@ import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import CandidateListSection from "@/app/dashboard/components/dashboard/CandidatesListSection";
 import { useTheme } from "@mui/material/styles";
 import { PHASE_OPTIONS } from "@/app/constants/phaseOptions";
@@ -37,6 +38,7 @@ import { getSkillsForRole, Skill } from "@/app/lib/skills";
 import JobDescription from "@/app/dashboard/components/JobDescription";
 import FilterSection from "@/app/dashboard/components/FilterSection";
 import Notification from '@/app/dashboard/components/Notification';
+import DeleteSnackbar from '@/app/dashboard/components/DeleteSnackbar';
 import MobileCandidateGrid from '@/app/dashboard/components/MobileCandidateGrid';
 import EmptyState from '@/app/dashboard/components/EmptyState';
 import {
@@ -136,6 +138,7 @@ export default function Home() {
   const [totalItems, setTotalItems] = useState(0);
   const [perPage, setPerPage] = useState(10);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Simplified getJobId function
   const getJobId = useCallback((): string => {
@@ -177,6 +180,28 @@ export default function Home() {
         setError("Failed to fetch job details");
       }
       setLoading(false);
+    }
+  };
+
+  const handleDeleteJob = async () => {
+    try {
+      const token = localStorage.getItem("jwt");
+      if (!token) throw new Error("Authentication token not found");
+      const jobId = getJobId();
+      const response = await fetch(`https://app.elevatehr.ai/wp-json/elevatehr/v1/jobs/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      handleApiError(response);
+      setNotification({ open: true, message: 'Job deleted', severity: 'success' });
+      router.push('/dashboard/job-listings');
+    } catch (err) {
+      setNotification({ open: true, message: err instanceof Error ? err.message : 'Failed to delete job', severity: 'error' });
+    } finally {
+      setDeleteDialogOpen(false);
     }
   };
   // Fetch job details
@@ -472,37 +497,7 @@ export default function Home() {
         throw new Error("No authentication token found");
       }
 
-      // if (stage.startsWith('assessment_')) {
-      //   console.log("running starts with assessment")
-      //   // Handle assessment sending
-      //   const assessmentId = dynamicPhaseOptions[getStageValue(subTabValue)]
-      //     .find(option => option.action === stage)?.id;
-
-      //   if (!assessmentId) {
-      //     throw new Error('Assessment ID not found');
-      //   }
-
-      //   const response = await fetch(
-      //     'https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/send-job-assessment',
-      //     {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json',
-      //         Authorization: `Bearer ${token}`,
-      //       },
-      //       body: JSON.stringify({
-      //         application_ids: entries,
-      //         assessment_id: assessmentId
-      //       })
-      //     }
-      //   );
-
-      //   handleApiError(response);
-
-      //   handleNotification('Assessment sent successfully', 'success');
-      // } else {
         console.log("running regular stage update")
-        // Handle regular stage update
         const response = await fetch(
           "https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/move-stage",
           {
@@ -519,17 +514,12 @@ export default function Home() {
         );
 
         handleApiError(response);
-
-
         handleNotification(
           `Successfully moved ${entries.length} candidate${entries.length > 1 ? "s" : ""
           } to ${stage.replace("_", " ")}`,
           "success"
         );
-      // }
-      console.log("fetching job details")
       fetchJobDetails();
-      // Refresh the candidates list
       fetchCandidates();
     } catch (error) {
       console.error("Error updating stage:", error);
@@ -852,13 +842,11 @@ export default function Home() {
         });
       } else {
         setAssessments([]);
-        // Reset to original phase options if no assessments
         setDynamicPhaseOptions(PHASE_OPTIONS);
       }
     } catch (error) {
       console.error("Error fetching assessments:", error);
       setAssessments([]);
-      // Reset to original phase options on error
       setDynamicPhaseOptions(PHASE_OPTIONS);
     } finally {
       setLoadingAssessments(false);
@@ -879,10 +867,8 @@ export default function Home() {
     setFilterMenuAnchor(null);
   };
 
-  // Add skeleton loader for job description
   const JobDescriptionSkeleton = () => (
     <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', width: '100%' }}>
-      {/* Left Sidebar Skeleton */}
       <Box
         sx={{
           width: { xs: '100%', md: 280 },
@@ -1023,26 +1009,77 @@ export default function Home() {
               )}
             </Typography>
           </Box>
-          <PrimaryButton
-            variant="contained"
-            onClick={handleCloseResponses}
-            sx={{
-              height: { xs: "36px", sm: "52px" },
-              "& .MuiButton-startIcon": {
-                marginRight: { xs: "4px", sm: "8px" },
-              },
-            }}
-          >
-            <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              {jobDetails?.status === "close"
-                ? "Reopen Job Posting"
-                : "Close Responses for this Job"}
-            </Box>
-            <Box sx={{ display: { xs: "block", sm: "none" } }}>
-              {jobDetails?.status === "close" ? "Reopen" : "Close Responses"}
-            </Box>
-          </PrimaryButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <PrimaryButton
+              variant="contained"
+              onClick={handleCloseResponses}
+              sx={{
+                height: { xs: "36px", sm: "52px" },
+                "& .MuiButton-startIcon": {
+                  marginRight: { xs: "4px", sm: "8px" },
+                },
+              }}
+            >
+              <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                {jobDetails?.status === "close"
+                  ? "Reopen Job Posting"
+                  : "Close Responses for this Job"}
+              </Box>
+              <Box sx={{ display: { xs: "block", sm: "none" } }}>
+                {jobDetails?.status === "close" ? "Reopen" : "Close Responses"}
+              </Box>
+            </PrimaryButton>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteRoundedIcon sx={{ fontSize: 18 }} />}
+              onClick={() => setDeleteDialogOpen(true)}
+              sx={{
+                height: { xs: '36px', sm: '52px' },
+                textTransform: 'none',
+                borderRadius: '8px',
+                borderColor: '#d32f2f',
+                color: '#d32f2f',
+                '&:hover': { 
+                  borderColor: '#b71c1c',
+                  color: '#b71c1c',
+                  backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                }
+              }}
+            >
+              Delete Job
+            </Button>
+          </Box>
         </Box>
+        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 600, pb: 2, px: 4, pt: 4 }}>Delete Job</DialogTitle>
+          <DialogContent sx={{ px: 4, pb: 2 }}>
+            <Typography sx={{ color: 'rgba(17, 17, 17, 0.72)' }}>
+              Are you sure you want to delete this job? This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 4, pb: 3 }}>
+            <Button variant="contained" color="primary" onClick={() => setDeleteDialogOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteRoundedIcon sx={{ fontSize: 18 }} />}
+              onClick={handleDeleteJob}
+              sx={{ 
+                textTransform: 'none', 
+                borderColor: '#d32f2f',
+                color: '#d32f2f',
+                '&:hover': { 
+                  borderColor: '#b71c1c',
+                  color: '#b71c1c',
+                  backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs
@@ -1377,15 +1414,10 @@ export default function Home() {
                   {filteredCandidates?.applications?.length > 1 && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box
                       sx={{
-                        // borderBottom: {
-                        //   xs: "none",
-                        //   lg: "1px solid rgba(0, 0, 0, 0.12)",
-                        // },
                         display: 'flex',
                         justifyContent: 'flex-start',
                         alignItems: 'center',
-                        // py: 0.5,
-
+                        
                       }}
                     >
                       {(() => {
@@ -1452,13 +1484,10 @@ export default function Home() {
                     subTabValue !== 4 && (
                       <Box sx={{ display: "flex", gap: 2 }}>
                         {(() => {
-                          // console.log('Current stage:', getStageValue(subTabValue));
-                          // console.log('Available options:', dynamicPhaseOptions[getStageValue(subTabValue)]);
                           return null;
                         })()}
                         {dynamicPhaseOptions[getStageValue(subTabValue)]?.map(
                           (option) => {
-                            // console.log('Rendering option:', option);
                             return (
                               <Button
                                 key={option.action}
@@ -1471,17 +1500,7 @@ export default function Home() {
                                   )
                                 }
                                 onClick={ () => {
-                                  // const emailStages = ["interviews", "acceptance", "archived"];
-                                  // if (emailStages.includes(option.action)) {
-                                   openEmailModalForAction(option.action);
-                                  // } else {
-                                  //   handleUpdateStages({
-                                  //     stage: option.action as StageType,
-                                  //     assessmentType: option.action.startsWith('assessment_')
-                                  //       ? option.action.replace('assessment_', '')
-                                  //       : undefined
-                                  //   });
-                                  // }
+                                  openEmailModalForAction(option.action);
                                 }}
                                 disabled={isMovingStage.length > 0}
                                 sx={{
@@ -1503,20 +1522,17 @@ export default function Home() {
                         )}
                       </Box>
                     )}
-                  {/* Rows-per-page moved below, just before candidates listing */}
                 </Box>
 
                 {/* Assessment Tabs */}
                 {subTabValue === 2 && (
                   <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                     {(() => {
-                      // console.log('Rendering assessment tabs with:', { selectedAssessmentType, assessments });
                       return null;
                     })()}
                     <Tabs
                       value={selectedAssessmentType}
                       onChange={(_, newValue) => {
-                        // console.log('Tab changed to:', newValue);
                         setSelectedAssessmentType(newValue);
                       }}
                       aria-label="skill assessment tabs"
@@ -1555,7 +1571,6 @@ export default function Home() {
                   </Box>
                 )}
 
-                {/* Candidates list */}
                 {loading ? (
                   <CandidateSkeletonLoader />
                 ) : filteredCandidates?.applications?.length === 0 ? (
@@ -1565,35 +1580,15 @@ export default function Home() {
                   />
                 ) : (
                   <>
-
                     {/* Desktop View */}
                     <Box
                       sx={{
                         maxWidth: '100%',
                         width: '100%',
-                        height: "100%",
                         overflowX: "hidden",
-                        overflowY: "auto",
                         pt: 0,
                         pb: 2,
                         display: { xs: "none", lg: "block" },
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: '#032B4420 transparent',
-                        '&::-webkit-scrollbar': {
-                          height: '4px',
-                          width: '4px',
-                        },
-                        '&::-webkit-scrollbar-track': {
-                          background: 'transparent',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: '#032B44',
-                          width: '4px',
-                          borderRadius: '4px',
-                          '&:hover': {
-                            background: 'rgba(68, 68, 226, 0.3)',
-                          },
-                        },
                       }}
                     >
                       {filteredCandidates?.applications?.map((candidate) => (
@@ -1615,9 +1610,7 @@ export default function Home() {
                             isSelected={selectedEntries?.includes(candidate.id)}
                             onSelectCandidate={handleSelectCandidate}
                             onUpdateStages={(action)=>openEmailModalForAction(action)}
-                            // disableSelection={
-                            //   filteredCandidates?.applications?.length === 1
-                            // }
+
                             currentStage={getStageValue(subTabValue)}
                             selectedEntries={selectedEntries}
                             setSelectedEntries={setSelectedEntries}
@@ -1627,8 +1620,6 @@ export default function Home() {
                         </Box>
                       ))}
                     </Box>
-
-                    {/* Mobile View - componentized */}
                     <MobileCandidateGrid
                       candidates={filteredCandidates?.applications || []}
                       selectedEntries={selectedEntries}
@@ -1643,6 +1634,7 @@ export default function Home() {
                     />
                   </>
                 )}
+
                 {/* Pagination controls */}
                 {primaryTabValue === 0 && totalPages > 0 && (
 
@@ -1701,7 +1693,7 @@ export default function Home() {
                   </Box>
                 )}
               </Paper>
-              {/* Bulk Email Modal */}
+              {/* Custom Email Modal */}
               <Dialog
                 open={emailModalOpen}
                 onClose={() => setEmailModalOpen(false)}
@@ -1766,7 +1758,6 @@ export default function Home() {
             </Box>
           </Stack>
         ) : (
-          // Job description tab with skeleton loader
           <Paper sx={{ bgcolor: 'transparent', boxShadow: 'none' }}>
             {loading ? (
               <JobDescriptionSkeleton />
@@ -1786,6 +1777,11 @@ export default function Home() {
 
 
       </Container>
+      <DeleteSnackbar
+        open={notification.open}
+        message={notification.message}
+        onClose={() => setNotification({ open: false, message: '', severity: 'success' })}
+      />
     </Box>
   );
 }
