@@ -615,7 +615,7 @@ export default function Home() {
       case "online_assessment_2":
         return "online_assessment_2";
       case "interviews":
-        return "interview_booking";
+        return "interviews";
       case "acceptance":
         return "acceptance";
       case "archived":

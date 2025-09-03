@@ -270,9 +270,16 @@ export default function CandidateListSection({
   const mapActionToTemplateKey = (action: string): string | null => {
     // Map stage action to template keys from API
     switch (action) {
+      case "skill_assessment":
+        return "skill_assessment";
+      case "technical_assessment":
+        return "technical_assessment";
+      case "online_assessment_1":
+        return "online_assessment_1";
+      case "online_assessment_2":
+        return "online_assessment_2";
       case "interviews":
-        // For scheduling, prefer interview_booking if available
-        return "interview_booking";
+        return "interviews";
       case "acceptance":
         return "acceptance";
       case "archived":
