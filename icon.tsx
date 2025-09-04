@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/server'
 import metadata from '../utils/metadata'
-import Image from 'next/image'
+
+// Route segment config
+export const runtime = 'edge'
 
 // Image metadata
 export const size = {
@@ -13,6 +15,7 @@ export const contentType = 'image/png'
 export default function Icon() {
   return new ImageResponse(
     (
+      // ImageResponse JSX element
       <div
         style={{
           width: '100%',
@@ -22,11 +25,9 @@ export default function Icon() {
           justifyContent: 'center',
         }}
       >
-        <Image
+        <img
           src={metadata.favicon}
           alt={metadata.title}
-          width={32}
-          height={32}
           style={{
             width: '100%',
             height: '100%',
