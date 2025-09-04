@@ -1,46 +1,32 @@
-import { ImageResponse } from 'next/server'
-import metadata from '../utils/metadata'
+import { NextRequest } from 'next/server'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
 // Route segment config
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // Image metadata
 export const size = {
   width: 32,
   height: 32,
 }
-export const contentType = 'image/png'
+export const contentType = 'image/svg+xml'
 
 // Image generation
-export default function Icon() {
-  return new ImageResponse(
-    (
-      // ImageResponse JSX element
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <img
-          src={metadata.favicon}
-          alt={metadata.title}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-          }}
-        />
-      </div>
-    ),
-    // ImageResponse options
-    {
-      // For convenience, we can re-use the exported icons size metadata
-      // config to also set the ImageResponse's width and height.
-      ...size,
-    }
-  )
+export default async function Icon(request: NextRequest) {
+  try {
+    // Read the favicon.svg file from the public directory
+    const faviconPath = join(process.cwd(), 'public', 'images', 'logos', 'favicon.svg')
+    const faviconBuffer = await readFile(faviconPath)
+    
+    return new Response(faviconBuffer, {
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    })
+  } catch (error) {
+    console.error('Error serving favicon:', error)
+    return new Response('Favicon not found', { status: 404 })
+  }
 }
