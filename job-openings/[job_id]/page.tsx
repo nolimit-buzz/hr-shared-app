@@ -556,7 +556,7 @@ const JobDetailsPage = () => {
                   </Stack>
                 </Box>
 
-                <Box>
+                {/* <Box>
                   <Typography
                     variant="h5"
                     sx={{
@@ -584,7 +584,7 @@ const JobDetailsPage = () => {
                       • Up to 80 days in maternity leave
                     </Typography>
                   </Stack>
-                </Box>
+                </Box> */}
               </Stack>
             </Box>
           </Grid>
