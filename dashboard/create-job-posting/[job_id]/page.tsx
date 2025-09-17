@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Box,
@@ -907,6 +907,8 @@ const AboutTheJob = () => {
 
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const customFieldsRef = useRef<CustomField[]>([]);
+  useEffect(() => { customFieldsRef.current = customFields; }, [customFields]);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [showDialog, setShowDialog] = useState(false);
@@ -992,28 +994,32 @@ const AboutTheJob = () => {
           });
           // Only set default custom fields if no custom fields exist in job data
           setFormFields(jobData.application_form?.required_fields || []);
+          // Ensure custom fields from API are reflected in builder
+          const apiCustomFields = jobData.application_form?.custom_fields || [];
+          const normalizedCustomFields = (apiCustomFields as any[]).map((f) => ({
+            ...f,
+            // Normalize select options to array of strings
+            options: f?.type === 'select'
+              ? (Array.isArray(f.options)
+                  ? f.options
+                  : f.options
+                    ? Object.values(f.options)
+                    : [])
+              : (f?.options ?? []),
+          }));
+          setCustomFields(normalizedCustomFields);
           setLoading(false);
           return;
         }
 
         const existingExpectations = jobData.expectations.split('|||') || [];
         
-        console.log('Job data received:', {
-          jobId: jobData.id,
-          assessment_id: jobData.assessment_id,
-          assessment_id_type: typeof jobData.assessment_id,
-          has_assessment: jobData.has_assessment,
-          quiz_assessment: jobData.quiz_assessment
-        });
         
         // Determine the assessment ID from multiple possible sources
         let assessmentId = jobData.assessment_id;
         if (!assessmentId && jobData.quiz_assessment && jobData.quiz_assessment.id) {
           assessmentId = jobData.quiz_assessment.id;
-        }
-        
-        console.log('Final assessment ID to use:', assessmentId);
-        
+        }        
         // Set form data first
         setFormData({
           ...jobData,
@@ -1024,8 +1030,22 @@ const AboutTheJob = () => {
           assessment_id: assessmentId || undefined
         });
 
-        // Only set default custom fields if no custom fields exist in job data
+        // Populate required and custom fields from API
         setFormFields(jobData.application_form?.required_fields || []);
+        console.log('Form fields:', jobData.application_form);
+        const apiCustomFields = jobData.application_form?.custom_fields || [];
+        const normalizedCustomFields = (apiCustomFields as any[]).map((f) => ({
+          ...f,
+          options: f?.type === 'select'
+            ? (Array.isArray(f.options)
+                ? f.options
+                : f.options
+                  ? Object.values(f.options)
+                  : [])
+            : (f?.options ?? []),
+        }));
+        setCustomFields(normalizedCustomFields);
+        console.log('Loaded custom fields:', normalizedCustomFields);
 
         setLoading(false);
       } catch (err) {
@@ -1050,12 +1070,7 @@ const AboutTheJob = () => {
             }
           }
         );
-        if (response.data.status === 'success') {
-          console.log('Assessments loaded:', {
-            count: response.data.assessments.length,
-            assessmentIds: response.data.assessments.map((a: Assessment) => a.id),
-            assessments: response.data.assessments
-          });
+        if (response.data.status === 'success') {        
           setAssessments(response.data.assessments);
         } else {
           console.error('Error fetching assessments:', response.data.message);
@@ -1072,12 +1087,6 @@ const AboutTheJob = () => {
 
   // Set selected assessment when either assessments or job data is loaded
   useEffect(() => {
-    console.log('useEffect triggered:', {
-      assessmentsLength: assessments.length,
-      formDataAssessmentId: formData.assessment_id,
-      selectedAssessment: selectedAssessment,
-      assessmentIdType: typeof formData.assessment_id
-    });
 
     // Check if we have assessments, an assessment ID, and no currently selected assessment
     if (assessments.length > 0 && 
@@ -1092,34 +1101,21 @@ const AboutTheJob = () => {
         ? parseInt(formData.assessment_id, 10) 
         : formData.assessment_id;
       
-      console.log('Looking for assessment with ID:', assessmentId);
       
       if (typeof assessmentId === 'number' && !isNaN(assessmentId)) {
         const assessment = assessments.find(a => a.id === assessmentId);
         if (assessment) {
-          console.log('Found and setting selected assessment:', assessment);
           setSelectedAssessment(assessment);
         } else {
-          console.log('Assessment not found in assessments array. Available IDs:', assessments.map(a => a.id));
         }
       }
     }
   }, [assessments, formData.assessment_id, selectedAssessment]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Current state:', {
-      assessmentsCount: assessments.length,
-      formDataAssessmentId: formData.assessment_id,
-      selectedAssessment: selectedAssessment,
-      currentStep
-    });
-  }, [assessments.length, formData.assessment_id, selectedAssessment, currentStep]);
 
   // Ensure assessment is selected when user navigates to assessment step
   useEffect(() => {
     if (currentStep === 3 && assessments.length > 0 && formData.assessment_id && !selectedAssessment) {
-      console.log('User navigated to assessment step, attempting to set assessment...');
       
       const assessmentId = typeof formData.assessment_id === 'string' 
         ? parseInt(formData.assessment_id, 10) 
@@ -1128,7 +1124,6 @@ const AboutTheJob = () => {
       if (typeof assessmentId === 'number' && !isNaN(assessmentId)) {
         const assessment = assessments.find(a => a.id === assessmentId);
         if (assessment) {
-          console.log('Setting assessment from step navigation:', assessment);
           setSelectedAssessment(assessment);
         }
       }
@@ -1138,7 +1133,6 @@ const AboutTheJob = () => {
   // Initial check for assessment when component mounts
   useEffect(() => {
     if (assessments.length > 0 && formData.assessment_id && !selectedAssessment) {
-      console.log('Component mounted, checking for existing assessment...');
       
       const assessmentId = typeof formData.assessment_id === 'string' 
         ? parseInt(formData.assessment_id, 10) 
@@ -1147,7 +1141,6 @@ const AboutTheJob = () => {
       if (typeof assessmentId === 'number' && !isNaN(assessmentId)) {
         const assessment = assessments.find(a => a.id === assessmentId);
         if (assessment) {
-          console.log('Setting assessment from initial mount:', assessment);
           setSelectedAssessment(assessment);
         }
       }
@@ -1244,24 +1237,71 @@ const AboutTheJob = () => {
   };
 
   const handleDeleteField = (index: number, optionIndex: number | null = null) => {
-    setCustomFields((prevFields) =>
-      prevFields.map((field, idx) => {
-        if (idx === index) {
-          if (optionIndex !== null) {
-            return {
-              ...field,
-              options: field.options?.filter((_, optIdx) => optIdx !== optionIndex) || []
-            };
+    setCustomFields((prevFields) => {
+      // Delete an option if a valid option index was provided
+      if (optionIndex !== null && optionIndex !== undefined) {
+        const next = prevFields.map((field, idx) => {
+          if (idx !== index) return field;
+          const nextOptions = (field.options || []).filter((_, optIdx) => optIdx !== optionIndex);
+        
+          return {
+            ...field,
+            options: nextOptions
+          };
+        });
+
+        // Keep formData.application_form.custom_fields in sync for option deletion
+        setFormData(prev => ({
+          ...prev,
+          application_form: {
+            ...(prev as any).application_form,
+            custom_fields: ((prev as any).application_form?.custom_fields || []).map((f: any, idx: number) => {
+              if (idx !== index) return f;
+              const opts = Array.isArray(f?.options) ? f.options : (f?.options ? Object.values(f.options) : []);
+              const updated = opts.filter((_: any, optIdx: number) => optIdx !== optionIndex);
+              return { ...f, options: updated };
+            })
           }
-          return null; // This will be filtered out below
+        }));
+
+        try {
+          // Best-effort log of next states after option deletion
+          // Note: formData update is async; this logs the intended next arrays
+          const nextFormDataCustom = ((typeof window !== 'undefined' && (window as any).structuredClone)
+            ? (window as any).structuredClone
+            : (o: any) => JSON.parse(JSON.stringify(o))
+          )((prevFields as any)).map((f: any, idx: number) => (
+            idx !== index
+              ? f
+              : { ...f, options: (f.options || []).filter((_: any, optIdx: number) => optIdx !== optionIndex) }
+          ));
+          console.log('[handleDeleteField] Option deleted:', { index, optionIndex, nextCustomFields: next, nextFormDataCustomFields: nextFormDataCustom });
+        } catch {}
+
+        return next;
+      }
+
+      // Otherwise, delete the entire field
+      const filtered = prevFields.filter((_, idx) => idx !== index);
+
+      // Sync removal to formData.application_form.custom_fields
+      setFormData(prev => ({
+        ...prev,
+        application_form: {
+          ...(prev as any).application_form,
+          custom_fields: ((prev as any).application_form?.custom_fields || []).filter((_: any, idx: number) => idx !== index)
         }
-        return field;
-      }).filter((field): field is CustomField => field !== null)
-    );
+      }));
+
+      try {
+        console.log('[handleDeleteField] Field deleted:', { index, nextCustomFields: filtered });
+      } catch {}
+
+      return filtered;
+    });
   };
 
   const handleAssessmentChange = (assessment: Assessment | null) => {
-    console.log('Assessment change:', assessment);
     setSelectedAssessment(assessment);
     // Also update the formData to keep it in sync
     setFormData(prev => ({
@@ -1343,26 +1383,42 @@ const AboutTheJob = () => {
 
   const handleDone = async () => {
     // Collate all the data
-    const collatedData = {
-      ...formData,
-      custom_fields: customFields.map(field => ({
+    // Sanitize custom fields before sending
+    const latestCustomFields = customFieldsRef.current.length ? customFieldsRef.current : customFields;
+    const sanitizedCustomFields = latestCustomFields
+      .filter((field) => field && field.key)
+      .map((field) => ({
         key: field.key,
         type: field.type,
-        label: field.label,
-        description: field.description,
-        value: field.value,
-        options: field.options
-      })),
+        label: field.label || '',
+        description: field.description || '',
+        value: field.value || '',
+        options: field.type === 'select'
+          ? (Array.isArray(field.options)
+              ? field.options.filter((opt) => typeof opt === 'string')
+              : field.options
+                ? Object.values(field.options as any)
+                : [])
+          : (field.options || []),
+      }))
+      // drop fields that are effectively empty (deleted or cleared)
+      .filter((field) => {
+        const hasLabel = (field.label || '').trim().length > 0;
+        const hasOptions = field.type === 'select' ? (field.options || []).length > 0 : true;
+        return hasLabel && hasOptions;
+      });
+
+    const collatedData = {
+      ...formData,
+      application_form: {
+        required_fields: formFields,
+        custom_fields: sanitizedCustomFields,
+      },
       assessment_ids: selectedAssessment ? [selectedAssessment.id] : [],
       expectations: formData.expectations.join('|||'),
       salary_min: parseInt(formData.salary_min.replace(/,/g, '')) || 0,
       salary_max: parseInt(formData.salary_max.replace(/,/g, '')) || 0
     };
-
-    console.log("Final form data:", formData);
-    console.log("Selected assessment:", selectedAssessment);
-    console.log("Assessment IDs being sent:", collatedData.assessment_ids);
-    console.log("Updating job post...", collatedData);
 
     if (!jobId) {
       alert("Error: Job ID is missing!");
@@ -1391,7 +1447,6 @@ const AboutTheJob = () => {
       setJobUrl(jobUrl);
       setShowDialog(true);
 
-      console.log("Success:", response.data);
     } catch (error) {
       const apiError = error as ApiError;
       console.error(
@@ -1737,10 +1792,9 @@ const AboutTheJob = () => {
               />
             ))}
 
-            {/* Display custom fields */}
             {customFields.map((field, index) => (
               <FormBuilderField
-                key={field.key}
+                key={`${field.key || 'custom'}-${index}`}
                 field={field.type === 'email' || field.type === 'url' ? { ...field, type: 'text' } : field}
                 index={index}
                 handleChange={handleFieldChange}
@@ -1761,11 +1815,7 @@ const AboutTheJob = () => {
           </Stack>
         );
       case 3:
-        console.log('Rendering AssessmentStep with props:', {
-          assessmentsCount: assessments.length,
-          selectedAssessment: selectedAssessment,
-          formDataAssessmentId: formData.assessment_id
-        });
+        
         return (
           <AssessmentStep
             assessments={assessments}
