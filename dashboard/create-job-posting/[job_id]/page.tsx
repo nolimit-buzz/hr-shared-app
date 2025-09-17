@@ -1106,7 +1106,6 @@ const AboutTheJob = () => {
         const assessment = assessments.find(a => a.id === assessmentId);
         if (assessment) {
           setSelectedAssessment(assessment);
-        } else {
         }
       }
     }
@@ -1276,7 +1275,10 @@ const AboutTheJob = () => {
               : { ...f, options: (f.options || []).filter((_: any, optIdx: number) => optIdx !== optionIndex) }
           ));
           console.log('[handleDeleteField] Option deleted:', { index, optionIndex, nextCustomFields: next, nextFormDataCustomFields: nextFormDataCustom });
-        } catch {}
+        } catch (e) {
+          console.error('Error deleting field:', e);
+          // Ignore errors in logging
+        }
 
         return next;
       }
@@ -1295,7 +1297,10 @@ const AboutTheJob = () => {
 
       try {
         console.log('[handleDeleteField] Field deleted:', { index, nextCustomFields: filtered });
-      } catch {}
+      } catch (e) {
+        console.error('Error logging field deletion:', e);
+        // Ignore errors in logging
+      }
 
       return filtered;
     });
