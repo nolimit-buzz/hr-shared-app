@@ -561,14 +561,19 @@ const FormBuilderField: React.FC<FormBuilderFieldProps> = ({
 
       {field.type === 'select' && (
         <Stack width={'100%'} gap={1}>
-          {Object.entries(field.options || {}).map(([value, label], optionIndex) => (
+          {(
+            Array.isArray(field.options)
+              ? field.options
+              : field.options
+                ? Object.values(field.options as any)
+                : []
+          ).map((option, optionIndex) => (
             <Stack key={optionIndex} direction={'row'} gap={1} alignItems={'center'}>
               <TextField
                 fullWidth
-                value={label || ''}
+                value={option || ''}
                 onChange={(e) => {
-                  const newOptions = { ...field.options, [value]: e.target.value };
-                  handleChange(index, 'options', JSON.stringify(newOptions));
+                  handleChange(index, 'options', e.target.value, optionIndex);
                 }}
                 variant="outlined"
                 placeholder="Option"
@@ -607,7 +612,18 @@ const FormBuilderField: React.FC<FormBuilderFieldProps> = ({
             <StyledOutlineButton
               variant="outlined"
               color="primary"
-              onClick={() => handleChange(index, 'options', '', (field.options || []).length)}
+              onClick={() => handleChange(
+                index,
+                'options',
+                '',
+                (
+                  Array.isArray(field.options)
+                    ? field.options
+                    : field.options
+                      ? Object.values(field.options as any)
+                      : []
+                ).length
+              )}
               style={{ alignSelf: 'flex-start' }}
             >
               Add Option
