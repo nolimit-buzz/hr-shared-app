@@ -223,7 +223,7 @@ const ProfilePage = () => {
             company: {
           name: profile.companyInfo.company_name || '',
           logo: profile.companyInfo.company_logo || '',
-          size: profile.companyInfo.number_of_employees || '0',
+          size: profile.companyInfo.number_of_employees || '',
           about: profile.companyInfo.about_company || '',
           bookingLink: profile.companyInfo.booking_link || '',
           website: profile.companyInfo.company_website || '',
@@ -972,8 +972,8 @@ const ProfilePage = () => {
             height: '50px',
           }}>
             {/* Logo */}
-            <Avatar
-              src={profileData.company.logo || '/images/logos/logo.svg'}
+            {profileData.company.logo && <Avatar
+              src={profileData.company.logo}
               alt={profileData.company.name}
               sx={{ 
                 width: 130, 
@@ -990,12 +990,12 @@ const ProfilePage = () => {
                   objectFit: 'cover',
                 }
               }}
-            />
+            />}
             
             {/* Company Name and Website */}
             <Box sx={{ pb: 0, mt: -1 }}>
               <Typography variant="h4" fontWeight={600} sx={{ color: 'rgba(17, 17, 17, 0.92)', fontSize: '28px' }}>
-                {profileData.company.name || 'ElevateHR'}
+                {profileData.company.name || ''}
               </Typography>
               
               <Typography 
@@ -1019,7 +1019,7 @@ const ProfilePage = () => {
                   }
                 }}
               >
-                {profileData.company.website || 'www.elevatehr.ai'}
+                {profileData.company.website || ''}
                 <Box component="span" sx={{ display: 'inline-block', ml: 0.5, transform: 'translateY(1px)' }}>
                   <svg width="14" height="14" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 10.5H1.5V2H5.25V0.75H0.75C0.335786 0.75 0 1.08579 0 1.5V11.25C0 11.6642 0.335786 12 0.75 12H10.75C11.1642 12 11.5 11.6642 11.5 11.25V6.75H10V10.5ZM6.75 0.75V2H9.4425L3.2175 8.2275L4.2725 9.2825L10.5 3.0575V5.75H11.75V0.75H6.75Z" fill="currentColor" />
@@ -1420,20 +1420,20 @@ const ProfilePage = () => {
                     Company Logo
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'center', sm: 'flex-start' }, gap: 3 }}>
-                    <Avatar
-                      src={profileData.company.logo || '/images/logos/logo.svg'}
-                      alt={profileData.company.name}
-                      sx={{
-                        width: { xs: 80, sm: 100 },
-                        height: { xs: 80, sm: 100 },
-                        border: '1px solid rgba(17, 17, 17, 0.08)',
-                        '& img': {
-                          objectFit: 'cover',
-                          width: '100%',
-                          height: '100%'
-                        }
-                      }}
-                    />
+                      {profileData.company.logo && <Avatar
+                        src={profileData.company.logo}
+                        alt={profileData.company.name}
+                        sx={{
+                          width: { xs: 80, sm: 100 },
+                          height: { xs: 80, sm: 100 },
+                          border: '1px solid rgba(17, 17, 17, 0.08)',
+                          '& img': {
+                            objectFit: 'cover',
+                            width: '100%',
+                            height: '100%'
+                          }
+                        }}
+                    />}
                     <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                       <Typography variant="body2" sx={{ color: 'rgba(17, 17, 17, 0.6)', mb: 2, fontSize: { xs: '14px', md: '15px' } }}>
                         Upload a logo for your company. This will be displayed on job postings and communications.

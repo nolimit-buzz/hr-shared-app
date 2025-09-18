@@ -190,9 +190,9 @@ const OnboardingPage = () => {
                     )}
 
                     {activeStep < steps.length - 1 ? (
-                        <Button variant="contained" onClick={handleNext} disabled={!isStepValid(activeStep)} sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>Next →</Button>
+                        <Button variant="contained" onClick={handleNext}  sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>Next →</Button>
                     ) : (
-                        <Button variant="contained" onClick={handleComplete} disabled={loading || !isStepValid(activeStep)} sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>
+                        <Button variant="contained" onClick={handleComplete} disabled={loading} sx={{ borderRadius: '8px', px: 4, py: 1.2 }}>
                             {loading ? 'Finishing up...' : 'Complete Setup'}
                         </Button>
                     )}
