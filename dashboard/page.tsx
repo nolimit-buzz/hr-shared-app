@@ -803,10 +803,10 @@ const Dashboard = () => {
             {/* Company Name and Website */}
             <Box sx={{ pb: 0, mt: -1 }}>
               <Typography variant="h4" fontWeight={600} sx={{ color: 'rgba(17, 17, 17, 0.92)', fontSize: '28px' }}>
-                {profileData.company.name || 'ElevateHR'}
+                {profileData.company.name}
               </Typography>
 
-              <Typography
+              {profileData.company.website && <Typography
                 component="a"
                 href={profileData.company.website ?
                   (profileData.company.website.startsWith('http') ? profileData.company.website : `https://${profileData.company.website}`) :
@@ -827,13 +827,13 @@ const Dashboard = () => {
                   }
                 }}
               >
-                {profileData.company.website || 'www.elevatehr.ai'}
+                {profileData.company.website}
                 <Box component="span" sx={{ display: 'inline-block', ml: 0.5, transform: 'translateY(1px)' }}>
                   <svg width="14" height="14" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 10.5H1.5V2H5.25V0.75H0.75C0.335786 0.75 0 1.08579 0 1.5V11.25C0 11.6642 0.335786 12 0.75 12H10.75C11.1642 12 11.5 11.6642 11.5 11.25V6.75H10V10.5ZM6.75 0.75V2H9.4425L3.2175 8.2275L4.2725 9.2825L10.5 3.0575V5.75H11.75V0.75H6.75Z" fill="currentColor" />
                   </svg>
                 </Box>
-              </Typography>
+              </Typography>}
             </Box>
             {/* </Box> */}
             <Button
