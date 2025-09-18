@@ -790,7 +790,7 @@ const ProfilePage = () => {
       setSaving(true);
       const token = localStorage.getItem('jwt');
       const response = await fetch('https://app.elevatehr.ai/wp-json/elevatehr/v1/company/profile', {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
