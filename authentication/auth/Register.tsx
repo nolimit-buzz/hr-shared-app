@@ -164,15 +164,15 @@ const Register: React.FC<RegisterProps> = ({ title, subtitle, subtext }) => {
       valid = false;
     }
 
-    if (!formData.numberOfEmployees) {
-      newErrors.numberOfEmployees = "Number of employees is required";
-      valid = false;
-    }
+    // if (!formData.numberOfEmployees) {
+    //   newErrors.numberOfEmployees = "Number of employees is required";
+    //   valid = false;
+    // }
 
-    if (!formData.job_title) {
-      newErrors.job_title = "Job title is required";
-      valid = false;
-    }
+    // if (!formData.job_title) {
+    //   newErrors.job_title = "Job title is required";
+    //   valid = false;
+    // }
 
     if (!formData.phone_number) {
       newErrors.phone_number = "Phone number is required";
