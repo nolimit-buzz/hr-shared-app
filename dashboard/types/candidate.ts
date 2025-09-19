@@ -17,6 +17,7 @@ export interface JobDetails {
   requirements?: string[];
   experience_years?: string;
   status: string;
+  assessment_id?: string;
 }
 
 export interface FilterState {

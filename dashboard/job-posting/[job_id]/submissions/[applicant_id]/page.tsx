@@ -315,7 +315,7 @@ export default function ApplicantDetails() {
       if (!token) throw new Error("Authentication token not found");
 
       const response = await fetch(
-        `https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/${applicant?.id}/move-stage`,
+        `https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/move-stage`,
         {
           method: "POST",
           headers: {
@@ -324,6 +324,7 @@ export default function ApplicantDetails() {
           },
           cache: "no-store",
           body: JSON.stringify({
+            entries: [applicant?.id],
             stage: "skill_assessment",
           }),
         }
@@ -332,13 +333,6 @@ export default function ApplicantDetails() {
       if (!response.ok) {
         throw new Error("Failed to move applicant to assessment");
       }
-
-      // Update the applicants list to remove the moved applicant
-      setApplicants((prevApplicants) =>
-        prevApplicants.filter((a) => a.id !== applicant?.id)
-      );
-      // Clear the current applicant
-      setApplicant(null);
     } catch (error) {
       console.error("Error moving applicant to assessment:", error);
       setError(

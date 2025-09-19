@@ -106,8 +106,8 @@ export default function CreateAssessmentPage() {
             job_title: jobTitle,
             level,
             skills: skills.join(","),
-            open_text_questions: numberOfOpenTextQuestions,
-            multi_choice_questions: numberOfMultiChoiceQuestions,
+            number_of_open_text_questions: +numberOfOpenTextQuestions,
+            number_of_multi_choice_questions: +numberOfMultiChoiceQuestions,
           }),
         }
       );

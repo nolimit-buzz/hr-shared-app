@@ -71,7 +71,14 @@ const OnboardingPage = () => {
             const token = localStorage.getItem('jwt');
             const response = await axios.post(
                 'https://app.elevatehr.ai/wp-json/elevatehr/v1/company/profile',
-                formData,
+                {...formData,
+                new_stage_notification:"yes",
+                skill_assessment_notification:"yes",
+                interviews_notification:"yes",
+                archived_notification:"yes",
+                rejection_notification:"yes",
+                acceptance_notification:"yes",
+                },
                 {
                     headers: {
                         'Content-Type': 'multipart/form-data',
@@ -80,6 +87,7 @@ const OnboardingPage = () => {
                 }
             );
 
+            console.log(response.data);
             localStorage.setItem('userProfile', JSON.stringify({
                 personalInfo: response.data.personal_info,
                 companyInfo: response.data.company_info,

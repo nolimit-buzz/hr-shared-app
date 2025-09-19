@@ -328,8 +328,10 @@ export default function CandidateListSection({
   };
 
   const handleSendEmailAndMoveStage = async () => {
+    console.log("pendingAction", pendingAction);
     if (!pendingAction) return;
     try {
+      console.log("pendingAction", pendingAction);
       setEmailLoading(true);
       const token = typeof window !== "undefined" ? localStorage.getItem("jwt") : null;
       if (!token) throw new Error("Authentication token not found");
@@ -684,7 +686,7 @@ export default function CandidateListSection({
 
           {/* Phase-specific options */}
           {filteredOptions.map((option: CandidatePhaseOption) => {
-            console.log("option", option);
+            // console.log("option", option);
             const IconComponent = option.icon;
             return (
               <MenuItem

@@ -479,18 +479,16 @@ export default function Home() {
     router.push(`/dashboard/job-posting/${jobId}/submissions/${candidateId}`);
   };
 
-  const handleUpdateStages = async ({
-    stage,
-    entries = selectedEntries,
-    assessmentType
+  const handleSendAssessment = async ({
+    application_ids,
+    assessment_id
   }: {
-    stage: StageType;
-    entries?: number[];
-    assessmentType?: string;
+    application_ids: number[];
+    assessment_id?: string;
   }) => {
-    if (!entries?.length) return;
+    if (!application_ids?.length || !assessment_id) return;
 
-    setIsMovingStage(stage);
+    setIsMovingStage(assessment_id);
     try {
       const token = localStorage.getItem("jwt");
       if (!token) {
@@ -499,7 +497,7 @@ export default function Home() {
 
         console.log("running regular stage update")
         const response = await fetch(
-          "https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/move-stage",
+          "https://app.elevatehr.ai/wp-json/elevatehr/v1/applications/send-job-assessment",
           {
             method: "POST",
             headers: {
@@ -507,16 +505,19 @@ export default function Home() {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              entries: entries,
-              stage: stage,
+              application_ids: application_ids,
+              assessment_id: assessment_id,
             }),
           }
         );
 
+        setEmailModalOpen(false);
+        setPendingAction(null);
+        setSelectedEntries([]);
         handleApiError(response);
         handleNotification(
-          `Successfully moved ${entries.length} candidate${entries.length > 1 ? "s" : ""
-          } to ${stage.replace("_", " ")}`,
+          `Successfully sent ${application_ids.length} candidate${application_ids.length > 1 ? "s" : ""
+          } to ${assessment_id.replace("_", " ")}`,
           "success"
         );
       fetchJobDetails();
@@ -616,6 +617,7 @@ export default function Home() {
   };
 
   const openEmailModalForAction = async (action: string) => {
+    console.log("action", action);
     try {
       setPendingAction(action);
       setEmailLoading(true);
@@ -657,6 +659,13 @@ export default function Home() {
 
   const handleSendBulkEmailAndMoveStage = async () => {
     if (!pendingAction || !selectedEntries || selectedEntries.length === 0) return;
+    if(pendingAction === "technical_assessment" || pendingAction === "online_assessment_1" || pendingAction === "online_assessment_2"){
+      handleSendAssessment({
+        application_ids: selectedEntries,
+        assessment_id: jobDetails?.assessment_id,
+      });
+      return;
+    }
     try {
       setEmailLoading(true);
       const token = localStorage.getItem("jwt");

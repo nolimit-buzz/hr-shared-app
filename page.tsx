@@ -251,7 +251,8 @@ const Login = () => {
                   localStorage.setItem('userProfile', JSON.stringify({
                     userId: response.user_id,
                     personalInfo: response.personal_info,
-                    companyInfo: response.company_info
+                    companyInfo: response.company_info,
+                    notifications: response.notifications
                   }));
 
                   // Redirect to dashboard using Next.js router
